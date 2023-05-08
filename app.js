@@ -45,8 +45,9 @@ app.get('/', accessToken, function(req, res){
     res.json(token);
 })
 
-app.get('/getIpn', accessToken, function(req, res){
-    
+//Register IPN callback URL
+app.get('/RegisterIpn', accessToken, function(req, res){
+
     unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/URLSetup/RegisterIPN/')
     .headers({
         "Content-Type" : "application/json",
@@ -66,9 +67,29 @@ app.get('/getIpn', accessToken, function(req, res){
     res.json('success')
 })
 
+//Receives IPN notifcations
 app.post('/ipn_callback', urlEncoded, function(req, res){
     console.log(req.body);
     req.json('success')
 })
+
+
+//Get registered IPNs for Particular Merchant
+app.get('/RegisteredIpns', accessToken, function(req, res){
+    unirest('GET', 'http://cybqa.pesapal.com/pesapalv3/api/URLSetup/GetIpnList')
+    .headers({
+        "Content-Type" : "application/json",
+        "Accept" : "application/json",
+        "Authorization": "Bearer " + req.access_token
+    })
+    .end(response => {
+        if (response.error) throw new Error(response.error);
+
+        console.log(response.raw_body);
+
+        res.json(response.raw_body)
+    });
+})
+
 
 app.listen(3000)
