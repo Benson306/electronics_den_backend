@@ -134,49 +134,53 @@ let Order = mongoose.model('orders', orderSchema);
 //Submit Order Request
 app.post('/Checkout', urlEncoded, accessToken, function(req, res){
 
-    Order(req.body).save(function(err, data){
+    Order(req.body).save()
+    .then(function(data){
+        res.json(data);
+    })
+    .catch(function(err){
         if(err) throw err;
-    });
-
-
-    unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/Transactions/SubmitOrderRequest')
-    .headers({
-        'Content-Type':'application/json',
-        'Accept':'application/json',
-        'Authorization':'Bearer ' + req.access_token
     })
-    .send({
-        "id": "Anklgklgndkzkjzkkkklf", //order id
-        "currency": "KES",
-        "amount": 1.00,
-        "description": "Payment for Iko Nini Merch",
-        "callback_url": "https://f2db-102-212-236-141.ngrok-free.app/SuccessPaymentCallback",
-        "cancellation_url": "https://f2db-102-212-236-141.ngrok-free.app/FailedPaymentCallback", //Replace with frontend failed Page URL
-        "redirect_mode": "",
-        "notification_id": "3dd10acf-a7ce-4543-923d-deb09bd2af93",
-        "branch": "Iko Nini - Nairobi",
-        "billing_address": {
-            "email_address": "bnkimtai@gmail.com",
-            "phone_number": "0707357072",
-            "country_code": "KE",
-            "first_name": "Ben",
-            "middle_name": "",
-            "last_name": "Ndiwa",
-            "line_1": "Ndiwa",
-            "line_2": "",
-            "city": "",
-            "state": "",
-            "postal_code": "",
-            "zip_code": ""
-        }
-    })
-    .end(response =>{
-        if (response.error) throw new Error(response.error);
 
-        console.log(response.raw_body);
 
-        res.json(response.raw_body)
-    })
+    // unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/Transactions/SubmitOrderRequest')
+    // .headers({
+    //     'Content-Type':'application/json',
+    //     'Accept':'application/json',
+    //     'Authorization':'Bearer ' + req.access_token
+    // })
+    // .send({
+    //     "id": "Anklgklgndkzkjzkkkklf", //order id
+    //     "currency": "KES",
+    //     "amount": 1.00,
+    //     "description": "Payment for Iko Nini Merch",
+    //     "callback_url": "https://f2db-102-212-236-141.ngrok-free.app/SuccessPaymentCallback",
+    //     "cancellation_url": "https://f2db-102-212-236-141.ngrok-free.app/FailedPaymentCallback", //Replace with frontend failed Page URL
+    //     "redirect_mode": "",
+    //     "notification_id": "3dd10acf-a7ce-4543-923d-deb09bd2af93",
+    //     "branch": "Iko Nini - Nairobi",
+    //     "billing_address": {
+    //         "email_address": "bnkimtai@gmail.com",
+    //         "phone_number": "0707357072",
+    //         "country_code": "KE",
+    //         "first_name": "Ben",
+    //         "middle_name": "",
+    //         "last_name": "Ndiwa",
+    //         "line_1": "Ndiwa",
+    //         "line_2": "",
+    //         "city": "",
+    //         "state": "",
+    //         "postal_code": "",
+    //         "zip_code": ""
+    //     }
+    // })
+    // .end(response =>{
+    //     if (response.error) throw new Error(response.error);
+
+    //     console.log(response.raw_body);
+
+    //     res.json(response.raw_body)
+    // })
 
 })
 
