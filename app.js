@@ -109,9 +109,35 @@ app.get('/RegisteredIpns', accessToken, function(req, res){
     });
 })
 
+let mongoose = require('mongoose');
+
+let mongoURI = process.env.Mongo_URI;
+
+mongoose.connect(mongoURI);
+
+let orderSchema =  new mongoose.Schema({
+    OrderTrackingId : String,
+    email: String,
+    phone_number: String, 
+    items : [{}],
+    completion_status: String,
+    deliveryLocation: String,
+    delivery_status: String,
+    delivery_cost: Number,
+    order_date: String,
+    delivery_date: String,
+    total_price: Number
+})
+
+let Order = mongoose.model('orders', orderSchema);
 
 //Submit Order Request
 app.post('/Checkout', urlEncoded, accessToken, function(req, res){
+
+    Order(req.body).save(function(err, data){
+        if(err) throw err;
+    });
+
 
     unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/Transactions/SubmitOrderRequest')
     .headers({
@@ -120,7 +146,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         'Authorization':'Bearer ' + req.access_token
     })
     .send({
-        "id": "Anklgklgndkzkjzkkkk", //order id
+        "id": "Anklgklgndkzkjzkkkklf", //order id
         "currency": "KES",
         "amount": 1.00,
         "description": "Payment for Iko Nini Merch",
@@ -172,5 +198,5 @@ app.get('/FailedPaymentCallback', function(req, res){
 
 
 
-
-app.listen(3000)
+port = process.env.PORT || 3000;
+app.listen(port);
