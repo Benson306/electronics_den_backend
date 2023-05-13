@@ -60,49 +60,10 @@ app.get('/RegisterIpn', accessToken, function(req, res){
     res.json('success')
 })
 
-//Receives IPN notifcations
-app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
-    console.log('---------------------Notification Callback ---------------------')
 
-    console.log(req.body);
-
-    //Get transaction Status
-    unirest('GET', `http://cybqa.pesapal.com/pesapalv3/api/Transactions/GetTransactionStatus?orderTrackingId=${req.body.OrderTrackingId}`)
-    .headers({
-        "Content-Type" : "application/json",
-        "Accept" : "application/json",
-        "Authorization": "Bearer " + req.access_token
-    })
-    .end(response =>{
-        if (response.error) throw new Error(response.error);
-
-        console.log('--------------------- Transaction Status ---------------------')
-        console.log(response.raw_body);
-    })
-    //console.log(req.body);
-    res.json('success')
-})
-
-
-
-//Get registered IPNs for Particular Merchant
-app.get('/RegisteredIpns', accessToken, function(req, res){
-    unirest('GET', 'http://cybqa.pesapal.com/pesapalv3/api/URLSetup/GetIpnList')
-    .headers({
-        "Content-Type" : "application/json",
-        "Accept" : "application/json",
-        "Authorization": "Bearer " + req.access_token
-    })
-    .end(response => {
-        if (response.error) throw new Error(response.error);
-
-        console.log(response.raw_body);
-
-        res.json(response.raw_body)
-    });
-})
 
 let mongoose = require('mongoose');
+const { data } = require('jquery');
 
 let mongoURI = process.env.Mongo_URI;
 
@@ -127,9 +88,22 @@ let Order = mongoose.model('orders', orderSchema);
 //Submit Order Request
 app.post('/Checkout', urlEncoded, accessToken, function(req, res){
 
-    Order(req.body).save()
-    .then(function(data){
-        //res.json(data);
+    let received = {
+        OrderTrackingId : "",
+        email : req.body.email,
+        phone_number : req.body.phoneNumber, 
+        items : req.body.products,
+        completion_status: "pending",
+        deliveryLocation : req.body.location,
+        delivery_status : "pending",
+        delivery_cost : req.body.deliveryCost,
+        order_date : "",
+        delivery_date : "",
+        total_price : req.body.total
+    }
+
+    Order(received).save()
+    .then(data => {
 
         unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/Transactions/SubmitOrderRequest')
         .headers({
@@ -140,10 +114,10 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         .send({
             "id": data._id, //order id
             "currency": "KES",
-            "amount": data.total_price,
+            "amount": 1, //data.total_price + data.delivery_cost
             "description": "Payment for Iko Nini Merch",
-            "callback_url": process.env.SERVER_URL +  "/SuccessPaymentCallback",
-            "cancellation_url": process.env.SERVER_URL + "/FailedPaymentCallback", //Replace with frontend failed Page URL
+            "callback_url": process.env.CLIENT_URL +  "/success",
+            "cancellation_url": process.env.CLIENT_URL + "/cancel", //Replace with frontend failed Page URL
             "redirect_mode": "",
             "notification_id": process.env.IPN_ID,
             "branch": "Iko Nini - Nairobi",
@@ -165,9 +139,16 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         .end(response =>{
             if (response.error) throw new Error(response.error);
 
-            console.log(response.raw_body);
+            //Update Order with tracking Id
+            Order.findOneAndUpdate({_id: data._id}, { OrderTrackingId: response.raw_body.order_tracking_id}, {new: false})
+            .then( data => {
+                res.json(response.raw_body)
+            })
+            .catch( err => {
+                console.log(err)
+            })
 
-            res.json(response.raw_body)
+            
         })
 
 
@@ -179,22 +160,81 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
 })
 
 
-//Receive Successful Payment Callbacks
-app.get('/SuccessPaymentCallback', function(req, res){
-    console.log('---------------------Succesful Payment Callback ---------------------')
-    console.log(req.body);
+//Receives IPN notifcations
+app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
 
-    res.json('success');
+    //Get transaction Status
+    unirest('GET', `http://cybqa.pesapal.com/pesapalv3/api/Transactions/GetTransactionStatus?orderTrackingId=${req.body.OrderTrackingId}`)
+    .headers({
+        "Content-Type" : "application/json",
+        "Accept" : "application/json",
+        "Authorization": "Bearer " + req.access_token
+    })
+    .end(response =>{
+        if (response.error) throw new Error(response.error);
+
+        let result = JSON.parse(response.raw_body);
+
+        Order.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { completion_status: result.payment_status_description},{ new: false })
+        .then( data => {
+            res.json('success')
+        })
+        .catch(err =>{
+            console.log(err);
+        })
+
+    })
+    
 })
 
-app.get('/FailedPaymentCallback', function(req, res){
-    console.log('---------------------Failed Payment Callback ---------------------')
-    console.log(req.body);
 
-    res.json('Failed');
+app.get('/ConfirmPayment/:id', urlEncoded, function(req, res){
+
+    //Check if Id is valid mongo Id
+    if (!mongoose.Types.ObjectId.isValid(req.params.id))
+    {
+            res.json('Invalid Id')
+    }else{
+        Order.findById()
+        Order.findById(req.params.id)
+        .then(data => {
+            if(data){ //Check id data has been found
+
+                if(data.completion_status === "Completed"){
+                    res.json('Completed')
+                }else if(data.completion_status === "Failed"){
+                    res.json('Failed')
+                }else if(data.completion_status === "pending"){
+                    res.json('Pending')
+                }
+
+            }else{
+                res.json('Order Does Not Exist');
+            }
+        })
+        .catch(err => {
+            console.log('error');    
+        })
+    }
+})
+
+
+//Get registered IPNs for Particular Merchant
+app.get('/RegisteredIpns', accessToken, function(req, res){
+    unirest('GET', 'http://cybqa.pesapal.com/pesapalv3/api/URLSetup/GetIpnList')
+    .headers({
+        "Content-Type" : "application/json",
+        "Accept" : "application/json",
+        "Authorization": "Bearer " + req.access_token
+    })
+    .end(response => {
+        if (response.error) throw new Error(response.error);
+
+        res.json(response.raw_body)
+    });
 })
 
 
 
-port = process.env.PORT || 3000;
+port = process.env.PORT || 5000;
 app.listen(port);
