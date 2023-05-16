@@ -16,6 +16,13 @@ app.use(cors());
 
 const unirest = require('unirest');
 
+let mongoose = require('mongoose');
+const { data } = require('jquery');
+
+let mongoURI = process.env.Mongo_URI;
+
+mongoose.connect(mongoURI);
+
 function accessToken(req, res, next){
 
     unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/Auth/RequestToken/')
@@ -38,6 +45,10 @@ function accessToken(req, res, next){
     });
 }
 
+function getDate(){
+    
+}
+
 //Register IPN callback URL
 app.get('/RegisterIpn', accessToken, function(req, res){
 
@@ -56,18 +67,9 @@ app.get('/RegisterIpn', accessToken, function(req, res){
 
         console.log(response.raw_body);
     });
-
     res.json('success')
 })
 
-
-
-let mongoose = require('mongoose');
-const { data } = require('jquery');
-
-let mongoURI = process.env.Mongo_URI;
-
-mongoose.connect(mongoURI);
 
 let orderSchema =  new mongoose.Schema({
     OrderTrackingId : String,
@@ -116,7 +118,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
             "currency": "KES",
             "amount": 1, //data.total_price + data.delivery_cost
             "description": "Payment for Iko Nini Merch",
-            "callback_url": process.env.CLIENT_URL +  "/success",
+            "callback_url": process.env.CLIENT_URL +  "/confirm",
             "cancellation_url": process.env.CLIENT_URL + "/cancel", //Replace with frontend failed Page URL
             "redirect_mode": "",
             "notification_id": process.env.IPN_ID,
@@ -139,6 +141,8 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         .end(response =>{
             if (response.error) throw new Error(response.error);
 
+            console.log(response.raw_body);
+
             //Update Order with tracking Id
             Order.findOneAndUpdate({_id: data._id}, { OrderTrackingId: response.raw_body.order_tracking_id}, {new: false})
             .then( data => {
@@ -147,21 +151,18 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
             .catch( err => {
                 console.log(err)
             })
-
-            
         })
-
-
     })
     .catch(function(err){
         if(err) throw err;
     })
-
 })
 
 
 //Receives IPN notifcations
 app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
+
+    console.log('accessed');
 
     //Get transaction Status
     unirest('GET', `http://cybqa.pesapal.com/pesapalv3/api/Transactions/GetTransactionStatus?orderTrackingId=${req.body.OrderTrackingId}`)
@@ -175,8 +176,11 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
 
         let result = JSON.parse(response.raw_body);
 
+        console.log(response.raw_body);
+
         Order.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { completion_status: result.payment_status_description},{ new: false })
         .then( data => {
+            console.log(data);
             res.json('success')
         })
         .catch(err =>{
@@ -234,6 +238,64 @@ app.get('/RegisteredIpns', accessToken, function(req, res){
     });
 })
 
+
+//Dashboard Data
+
+//Get Delivered Orders
+app.get('/GetAllOrders', function(req, res){
+    Order.find({})
+    .then( data =>{ 
+        res.json(data);
+    })
+    .catch(err =>{
+        console.log(err);
+    })
+})
+
+app.get('/GetDeliveredOrders', function(req, res){
+    Order.find({ delivery_status: 'delivered' })
+    .then( data =>{ 
+        res.json(data);
+    })
+    .catch(err =>{
+        console.log(err);
+    })
+})
+
+
+//Get Orders Pending Delivery
+app.get('/GetPendingOrders', function(req, res){
+    Order.find({$and:[{ delivery_status: 'pending' },{completion_status: 'Completed'}]})
+    .then( data =>{ 
+        //console.log(data[10].items)
+        res.json(data);
+    })
+    .catch(err =>{
+        console.log(err);
+    })
+})
+
+
+//user model
+let userSchema = new mongoose.Schema({
+    email: String,
+    password: String
+})
+
+
+let User = mongoose.model('users', userSchema);
+
+
+app.post('/add_user', urlEncoded, function(req, res){
+    
+    User(req.body).save()
+    .then( res =>{
+        res.json('Added');
+    })
+    .catch(err =>{
+        res.json('Not Added')
+    })
+})
 
 
 port = process.env.PORT || 5000;
