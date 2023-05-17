@@ -286,17 +286,54 @@ let userSchema = new mongoose.Schema({
 let User = mongoose.model('users', userSchema);
 
 
+const bcrypt = require('bcrypt');
+
+const saltRounds = 10;
+
+const someOtherPlaintextPassword = 'niniiko';
+
 app.post('/add_user', urlEncoded, function(req, res){
     
-    User(req.body).save()
-    .then( res =>{
-        res.json('Added');
+    const myPlaintextPassword = req.body.password;
+
+    //Check if user exists
+    User.find({email: req.body.email})
+    .then(data =>{
+        if(data.length > 0){
+            res.json('Exists')
+        }else{
+                bcrypt.hash(myPlaintextPassword, saltRounds, function(err, hash) {
+                    // Store hash in your password DB.
+                    User({ email: req.body.email, password: hash}).save()
+                    .then( data =>{
+                        res.json('Added');
+                    })
+                    .catch(err =>{
+                        res.json('Not Added')
+                    })
+                });
+        }
     })
-    .catch(err =>{
-        res.json('Not Added')
-    })
+    .catch(err => console.log(err))
+
 })
 
+
+app.get('/users', function(req, res){
+    User.find()
+    .then(data =>{
+        res.json(data);    
+    })
+    .catch(err => console.log(err))
+})
+
+app.delete('/delete/:id', urlEncoded, function(req, res){
+    User.findByIdAndDelete(req.params.id)
+    .then(result =>{
+        res.json('success');
+    })
+    .catch( err => console.log(err) )
+})
 
 port = process.env.PORT || 5000;
 app.listen(port);
