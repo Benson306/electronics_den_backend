@@ -167,8 +167,6 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
 //Receives IPN notifcations
 app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
 
-    console.log('accessed');
-
     //Get transaction Status
     unirest('GET', `http://cybqa.pesapal.com/pesapalv3/api/Transactions/GetTransactionStatus?orderTrackingId=${req.body.OrderTrackingId}`)
     .headers({
@@ -181,11 +179,8 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
 
         let result = JSON.parse(response.raw_body);
 
-        console.log(response.raw_body);
-
         Order.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { completion_status: result.payment_status_description},{ new: false })
         .then( data => {
-            console.log(data);
             res.json('success')
         })
         .catch(err =>{
@@ -272,7 +267,6 @@ app.get('/GetDeliveredOrders', function(req, res){
 app.get('/GetPendingOrders', function(req, res){
     Order.find({$and:[{ delivery_status: 'pending' },{completion_status: 'Completed'}]})
     .then( data =>{ 
-        //console.log(data[10].items)
         res.json(data);
     })
     .catch(err =>{
