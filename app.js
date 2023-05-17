@@ -45,8 +45,13 @@ function accessToken(req, res, next){
     });
 }
 
-function getDate(){
-    
+function getTodayDate() {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+  const year = today.getFullYear();
+
+  return `${day}/${month}/${year}`;
 }
 
 //Register IPN callback URL
@@ -89,7 +94,7 @@ let Order = mongoose.model('orders', orderSchema);
 
 //Submit Order Request
 app.post('/Checkout', urlEncoded, accessToken, function(req, res){
-
+    let date = getTodayDate();
     let received = {
         OrderTrackingId : "",
         email : req.body.email,
@@ -99,7 +104,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         deliveryLocation : req.body.location,
         delivery_status : "pending",
         delivery_cost : req.body.deliveryCost,
-        order_date : "",
+        order_date : date,
         delivery_date : "",
         total_price : req.body.total
     }
@@ -275,6 +280,16 @@ app.get('/GetPendingOrders', function(req, res){
     })
 })
 
+//Update Orders On Delivery
+app.put('/update_delivery/:id', urlEncoded, function(req, res){
+    let date = getTodayDate(); 
+    Order.findByIdAndUpdate(req.params.id,{delivery_status:'delivered', delivery_date: date }, {new: true})
+    .then(data => {
+        res.json('success')
+    })
+    .catch(err => console.log('error'))
+})
+
 
 //user model
 let userSchema = new mongoose.Schema({
@@ -292,6 +307,7 @@ const saltRounds = 10;
 
 const someOtherPlaintextPassword = 'niniiko';
 
+//Add Users
 app.post('/add_user', urlEncoded, function(req, res){
     
     const myPlaintextPassword = req.body.password;
@@ -319,6 +335,7 @@ app.post('/add_user', urlEncoded, function(req, res){
 })
 
 
+//Get Users
 app.get('/users', function(req, res){
     User.find()
     .then(data =>{
@@ -327,6 +344,7 @@ app.get('/users', function(req, res){
     .catch(err => console.log(err))
 })
 
+//Delete User
 app.delete('/delete/:id', urlEncoded, function(req, res){
     User.findByIdAndDelete(req.params.id)
     .then(result =>{
@@ -334,6 +352,28 @@ app.delete('/delete/:id', urlEncoded, function(req, res){
     })
     .catch( err => console.log(err) )
 })
+
+
+//Login
+app.post('/login', urlEncoded, function(req, res){
+    User.findOne({email: req.body.email})
+    .then(data =>{
+        if(data){
+            bcrypt.compare(req.body.password, data.password, function(err, result) {
+                if(result){
+                    res.json('success')
+                }else{
+                    res.json('Wrong Credentials')
+                }
+            })
+
+        }else{
+            res.json('Wrong Credentails')
+        }
+    })
+})
+
+
 
 port = process.env.PORT || 5000;
 app.listen(port);
