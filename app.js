@@ -17,7 +17,6 @@ app.use(cors());
 const unirest = require('unirest');
 
 let mongoose = require('mongoose');
-const { data } = require('jquery');
 
 let mongoURI = process.env.Mongo_URI;
 
@@ -121,7 +120,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         .send({
             "id": data._id, //order id
             "currency": "KES",
-            "amount": 1, //data.total_price + data.delivery_cost
+            "amount":  1,//data.total_price + data.delivery_cost,
             "description": "Payment for Iko Nini Merch",
             "callback_url": process.env.CLIENT_URL +  "/confirm",
             "cancellation_url": process.env.CLIENT_URL + "/cancel", //Replace with frontend failed Page URL
@@ -166,6 +165,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
 
 //Receives IPN notifcations
 app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
+    console.log('ipn callback')
 
     //Get transaction Status
     unirest('GET', `http://cybqa.pesapal.com/pesapalv3/api/Transactions/GetTransactionStatus?orderTrackingId=${req.body.OrderTrackingId}`)
@@ -181,6 +181,7 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
 
         Order.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { completion_status: result.payment_status_description},{ new: false })
         .then( data => {
+            console.log(data);
             res.json('success')
         })
         .catch(err =>{
@@ -199,7 +200,6 @@ app.get('/ConfirmPayment/:id', urlEncoded, function(req, res){
     {
             res.json('Invalid Id')
     }else{
-        Order.findById()
         Order.findById(req.params.id)
         .then(data => {
             if(data){ //Check id data has been found
