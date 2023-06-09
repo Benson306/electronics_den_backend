@@ -70,8 +70,9 @@ app.get('/RegisterIpn', accessToken, function(req, res){
         if (response.error) throw new Error(response.error);
 
         console.log(response.raw_body);
+        res.json(response.raw_body);
     });
-    res.json('success')
+    
 })
 
 
