@@ -30,5 +30,8 @@ app.use('/', ProductsController);
 let OrdersController = require('./controllers/OrdersController');
 app.use('/', OrdersController);
 
+let VideosController = require('./controllers/VideosController');
+app.use('/', VideosController);
+
 port = process.env.PORT || 5000;
 app.listen(port);
