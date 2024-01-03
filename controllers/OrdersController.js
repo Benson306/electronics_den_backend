@@ -80,7 +80,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         total_price : req.body.total
     }
 
-    Order(received).save()
+    Orders(received).save()
     .then(data => {
 
         unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/Transactions/SubmitOrderRequest')
