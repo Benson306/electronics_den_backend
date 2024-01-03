@@ -10,8 +10,6 @@ let cors = require('cors');
 
 app.use(cors());
 
-const unirest = require('unirest');
-
 let mongoose = require('mongoose');
 
 let mongoURI = process.env.Mongo_URI;
