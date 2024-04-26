@@ -31,6 +31,10 @@ app.use('/', OrdersController);
 let VideosController = require('./controllers/VideosController');
 app.use('/', VideosController);
 
+app.get('/',(req, res)=>{
+    res.json('Iko Nini');
+})
+
 let port = process.env.PORT || 5000;
 
 app.listen(port, ()=>{
