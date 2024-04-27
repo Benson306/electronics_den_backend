@@ -58,7 +58,7 @@ app.post('/add_product', upload.single('image'), (req, res)=>{
 
     let data = {
         image, type, productName, price, xSmall, small, medium, large,
-        xLarge, xXLarge
+        xLarge, xXLarge, availability : true
     }
 
     Products(data).save()
