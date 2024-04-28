@@ -217,7 +217,7 @@ app.get('/RegisteredIpns', accessToken, function(req, res){
 
 //Get Delivered Orders
 app.get('/GetAllOrders', function(req, res){
-    Orders.find({})
+    Orders.find({ completion_status: "Completed"})
     .then( data =>{ 
         res.json(data);
     })
