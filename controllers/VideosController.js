@@ -26,10 +26,12 @@ const upload = multer({ storage })
 
 app.post('/add_video', upload.single('thumbnail'), (req, res)=>{
     let thumbnail = req.file.filename;
+    let hours = req.body.hours;
+    let minutes = req.body.minutes;
     let title = req.body.title;
     let price = req.body.price;
 
-    Videos({ thumbnail, title, price }).save()
+    Videos({ thumbnail, title, hours, minutes, price }).save()
     .then((response)=>{
         res.status(200).json('success');
     })
