@@ -67,9 +67,22 @@ app.get('/RegisterIpn', accessToken, function(req, res){
     
 })
 
+const phoneRegex = /^0[0-9]{9}$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 //Submit Order Request
 app.post('/Checkout', urlEncoded, accessToken, function(req, res){
     let date = getTodayDate();
+
+    // Validate email
+    if (!emailRegex.test(req.body.email)) {
+        return res.status(400).json({ error: "Invalid email address" });
+    }
+
+    // Validate phone number
+    if (!phoneRegex.test(req.body.phoneNumber)) {
+        return res.status(400).json({ error: "Invalid phone number" });
+    }
 
     let received = {
         OrderTrackingId : "",
@@ -167,7 +180,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
     })
     .catch(error => {
         // Handle errors here
-        res.status(500).json(error);
+        res.status(500).json("Server Error. Try again");
     });
 })
 
