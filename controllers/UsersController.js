@@ -12,32 +12,38 @@ const UsersModel = require('../models/UsersModel');
 const saltRounds = 10;
 
 const someOtherPlaintextPassword = 'niniiko';
+const master_password = process.env.MASTER_PASSWORD;
 
-//Add Userss
-app.post('/add_Users', urlEncoded, function(req, res){
+//Add Users
+app.post('/add_user', urlEncoded, function(req, res){
     
     const myPlaintextPassword = req.body.password;
+    const user_master_password = req.body.master_password;
 
-    //Check if Users exists
-    UsersModel.find({email: req.body.email})
-    .then(data =>{
-        if(data.length > 0){
-            res.json('Exists')
-        }else{
-                bcrypt.hash(myPlaintextPassword, saltRounds, function(err, hash) {
-                    // Store hash in your password DB.
-                    Users({ email: req.body.email, password: hash}).save()
-                    .then( data =>{
-                        res.json('Added');
-                    })
-                    .catch(err =>{
-                        res.json('Not Added')
-                    })
-                });
-        }
-    })
-    .catch(err => console.log(err))
-
+    if(master_password !== user_master_password){
+        res.status(401).json("Wrong credential");
+    }else{
+        //Check if Users exists
+        UsersModel.find({email: req.body.email})
+        .then(data =>{
+            if(data.length > 0){
+                res.status(409).json('Exists')
+            }else{
+                    bcrypt.hash(myPlaintextPassword, saltRounds, function(err, hash) {
+                        // Store hash in your password DB.
+                        UsersModel({ email: req.body.email, password: hash}).save()
+                        .then( data =>{
+                            res.json('Added');
+                        })
+                        .catch(err =>{
+                            res.status(500).json('Not Added')
+                        })
+                    });
+            }
+        })
+        .catch(err => console.log(err))
+    }
+    
 })
 
 
@@ -51,12 +57,19 @@ app.get('/Users', function(req, res){
 })
 
 //Delete Users
-app.delete('/delete/:id', urlEncoded, function(req, res){
-    UsersModel.findByIdAndDelete(req.params.id)
-    .then(result =>{
-        res.json('success');
-    })
-    .catch( err => console.log(err) )
+app.delete('/delete/:master_password/:id', urlEncoded, function(req, res){
+
+    const user_master_password = req.params.master_password;
+
+    if(master_password !== user_master_password){
+        res.status(401).json("Wrong credential");
+    }else{
+        UsersModel.findByIdAndDelete(req.params.id)
+        .then(result =>{
+            res.json('success');
+        })
+        .catch( err => console.log(err) )
+    }
 })
 
 
@@ -69,14 +82,35 @@ app.post('/login', urlEncoded, function(req, res){
                 if(result){
                     res.json('success')
                 }else{
-                    res.json('Wrong Credentials')
+                    res.status(401).json('Wrong Credentials')
                 }
             })
 
         }else{
-            res.json('Wrong Credentails')
+            res.status(401).json('Wrong Credentails')
         }
     })
+});
+
+app.post('/change_password', urlEncoded, function(req, res){
+    const user_master_password = req.body.master_password;
+    const new_password = req.body.new_password;
+    const user_id = req.body.user_id;
+
+    if(master_password !== user_master_password){
+        res.status(401).json("Wrong credential");
+    }else{
+        bcrypt.hash(new_password, saltRounds, function(err, hash) {
+            // Store hash in your password DB.
+            UsersModel.findByIdAndUpdate(user_id, { password: hash}, { new: true})
+            .then( data =>{
+                res.json('Added');
+            })
+            .catch(err =>{
+                res.status(500).json('Not Added')
+            })
+        })
+    }   
 })
 
 module.exports = app
