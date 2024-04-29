@@ -76,12 +76,12 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
 
     // Validate email
     if (!emailRegex.test(req.body.email)) {
-        return res.status(400).json({ error: "Invalid email address" });
+        return res.status(400).json("Invalid email address");
     }
 
     // Validate phone number
     if (!phoneRegex.test(req.body.phoneNumber)) {
-        return res.status(400).json({ error: "Invalid phone number" });
+        return res.status(400).json("Invalid phone number");
     }
 
     let received = {
