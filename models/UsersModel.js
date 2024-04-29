@@ -6,6 +6,6 @@ let userSchema = new mongoose.Schema({
 })
 
 
-let Users = mongoose.model('users', userSchema);
+let UsersModel = mongoose.model('users', userSchema);
 
-module.exports = Users
+module.exports = UsersModel

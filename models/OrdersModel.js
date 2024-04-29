@@ -14,6 +14,6 @@ let orderSchema =  new mongoose.Schema({
     total_price: Number
 })
 
-let Orders = mongoose.model('orders', orderSchema);
+let OrdersModel = mongoose.model('orders', orderSchema);
 
-module.exports = Orders
+module.exports = OrdersModel

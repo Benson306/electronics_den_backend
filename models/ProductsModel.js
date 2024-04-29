@@ -14,6 +14,6 @@ let productsSchema = new mongoose.Schema({
     availability: Boolean
 })
 
-let Products = mongoose.model('products', productsSchema);
+let ProductsModel = mongoose.model('products', productsSchema);
 
-module.exports = Products
+module.exports = ProductsModel

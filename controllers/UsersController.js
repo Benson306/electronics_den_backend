@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const urlEncoded = bodyParser.urlencoded({extended: false});
 
 const bcrypt = require('bcrypt');
-const Users = require('../models/UsersModel');
+const UsersModel = require('../models/UsersModel');
 
 const saltRounds = 10;
 
@@ -19,7 +19,7 @@ app.post('/add_Users', urlEncoded, function(req, res){
     const myPlaintextPassword = req.body.password;
 
     //Check if Users exists
-    Users.find({email: req.body.email})
+    UsersModel.find({email: req.body.email})
     .then(data =>{
         if(data.length > 0){
             res.json('Exists')
@@ -43,7 +43,7 @@ app.post('/add_Users', urlEncoded, function(req, res){
 
 //Get Userss
 app.get('/Users', function(req, res){
-    Users.find()
+    UsersModel.find()
     .then(data =>{
         res.json(data);    
     })
@@ -52,7 +52,7 @@ app.get('/Users', function(req, res){
 
 //Delete Users
 app.delete('/delete/:id', urlEncoded, function(req, res){
-    Users.findByIdAndDelete(req.params.id)
+    UsersModel.findByIdAndDelete(req.params.id)
     .then(result =>{
         res.json('success');
     })
@@ -62,7 +62,7 @@ app.delete('/delete/:id', urlEncoded, function(req, res){
 
 //Login
 app.post('/login', urlEncoded, function(req, res){
-    Users.findOne({email: req.body.email})
+    UsersModel.findOne({email: req.body.email})
     .then(data =>{
         if(data){
             bcrypt.compare(req.body.password, data.password, function(err, result) {

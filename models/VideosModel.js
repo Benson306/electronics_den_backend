@@ -9,6 +9,6 @@ let videosSchema = new mongoose.Schema({
 })
 
 
-let Videos = mongoose.model('videos', videosSchema);
+let VideosModel = mongoose.model('videos', videosSchema);
 
-module.exports = Videos
+module.exports = VideosModel

@@ -11,7 +11,7 @@ const multer = require('multer'); // For handling file uploads
 const fs = require('fs'); // For working with the file system
 
 const path = require('path'); // For handling file paths
-const Videos = require('../models/VideosModel');
+const VideosModel = require('../models/VideosModel');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb)=>{
@@ -31,7 +31,7 @@ app.post('/add_video', upload.single('thumbnail'), (req, res)=>{
     let title = req.body.title;
     let price = req.body.price;
 
-    Videos({ thumbnail, title, hours, minutes, price }).save()
+    VideosModel({ thumbnail, title, hours, minutes, price }).save()
     .then((response)=>{
         res.status(200).json('success');
     })
@@ -41,7 +41,7 @@ app.post('/add_video', upload.single('thumbnail'), (req, res)=>{
 })
 
 app.get('/get_videos', (req, res)=>{
-    Videos.find({})
+    VideosModel.find({})
     .then((response)=>{
         res.json(response);
     })
@@ -51,7 +51,7 @@ app.get('/get_videos', (req, res)=>{
 })
 
 app.delete('/del_video/:id', (req, res)=>{
-    Videos.findByIdAndRemove(req.params.id)
+    VideosModel.findByIdAndRemove(req.params.id)
     .then(()=>{
         res.status(200).json('success');
     })

@@ -6,11 +6,13 @@ let mongoose = require('mongoose');
 
 const bodyParser = require('body-parser');
 
-const Orders = require('../models/OrdersModel');
+const OrdersModel = require('../models/OrdersModel');
+const ProductsModel = require('../models/ProductsModel');
 
 const urlEncoded = bodyParser.urlencoded({extended: false});
 
 const unirest = require('unirest');
+const VideosModel = require('../models/VideosModel');
 
 function accessToken(req, res, next){
 
@@ -68,6 +70,7 @@ app.get('/RegisterIpn', accessToken, function(req, res){
 //Submit Order Request
 app.post('/Checkout', urlEncoded, accessToken, function(req, res){
     let date = getTodayDate();
+
     let received = {
         OrderTrackingId : "",
         email : req.body.email,
@@ -78,62 +81,94 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         delivery_status : "pending",
         delivery_cost : req.body.deliveryCost,
         order_date : date,
-        delivery_date : "",
-        total_price : req.body.total
+        delivery_date : ""
     }
 
-    Orders(received).save()
-    .then(data => {
+    let TotalPrice = 0;
 
-        unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/Transactions/SubmitOrderRequest')
-        .headers({
-            'Content-Type':'application/json',
-            'Accept':'application/json',
-            'Authorization':'Bearer ' + req.access_token
-        })
-        .send({
-            "id": data._id, //order id
-            "currency": "KES",
-            "amount":  1,//data.total_price + data.delivery_cost,
-            "description": "Payment for Iko Nini Merch",
-            "callback_url": process.env.CLIENT_URL +  "/confirm",
-            "cancellation_url": process.env.CLIENT_URL + "/cancel", //Replace with frontend failed Page URL
-            "redirect_mode": "",
-            "notification_id": process.env.IPN_ID,
-            "branch": "Iko Nini - Nairobi",
-            "billing_address": {
-                "email_address": data.email,
-                "phone_number": data.phone_number,
-                "country_code": "KE",
-                "first_name": "Ben",
-                "middle_name": "",
-                "last_name": "Ndiwa",
-                "line_1": "Ndiwa",
-                "line_2": "",
-                "city": "",
-                "state": "",
-                "postal_code": "",
-                "zip_code": ""
-            }
-        })
-        .end(response =>{
-            if (response.error) throw new Error(response.error);
-
-            console.log(response.raw_body);
-
-            //Update Order with tracking Id
-            Orders.findOneAndUpdate({_id: data._id}, { OrderTrackingId: response.raw_body.order_tracking_id}, {new: false})
-            .then( data => {
-                res.json(response.raw_body)
+    let promises = received.items.map( item => {
+        if(item.title){
+            return VideosModel.findOne({ _id : item._id })
+            .then(response => {
+                if(item.quantity < 1){
+                    TotalPrice = TotalPrice + ( response.price * 1);
+                }else{
+                    TotalPrice = TotalPrice + ( response.price * item.quantity);
+                }
             })
-            .catch( err => {
-                console.log(err)
+        }else{
+            return ProductsModel.findOne({ _id : item._id })
+            .then(response => {
+                if(item.quantity < 1){
+                    TotalPrice = TotalPrice + ( response.price * 1);
+                }else{
+                    TotalPrice = TotalPrice + ( response.price * item.quantity);
+                }
             })
+        }
+    })
+
+    Promise.all(promises)
+    .then(() => {
+        received.total_price = TotalPrice;
+
+        OrdersModel(received).save()
+        .then(data => {
+
+            unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/Transactions/SubmitOrderRequest')
+            .headers({
+                'Content-Type':'application/json',
+                'Accept':'application/json',
+                'Authorization':'Bearer ' + req.access_token
+            })
+            .send({
+                "id": data._id, //order id
+                "currency": "KES",
+                "amount":  1,//TotalPrice + delivery cost
+                "description": "Payment for Iko Nini Merch",
+                "callback_url": process.env.CLIENT_URL +  "/confirm",
+                "cancellation_url": process.env.CLIENT_URL + "/cancel", //Replace with frontend failed Page URL
+                "redirect_mode": "",
+                "notification_id": process.env.IPN_ID,
+                "branch": "Iko Nini - Nairobi",
+                "billing_address": {
+                    "email_address": data.email,
+                    "phone_number": data.phone_number,
+                    "country_code": "KE",
+                    "first_name": "Ben",
+                    "middle_name": "",
+                    "last_name": "Ndiwa",
+                    "line_1": "Ndiwa",
+                    "line_2": "",
+                    "city": "",
+                    "state": "",
+                    "postal_code": "",
+                    "zip_code": ""
+                }
+            })
+            .end(response =>{
+                if (response.error) throw new Error(response.error);
+
+                console.log(response.raw_body);
+
+                //Update Order with tracking Id
+                OrdersModel.findOneAndUpdate({_id: data._id}, { OrderTrackingId: response.raw_body.order_tracking_id}, {new: false})
+                .then( data => {
+                    res.json(response.raw_body)
+                })
+                .catch( err => {
+                    console.log(err)
+                })
+            })
+        })
+        .catch(function(err){
+            if(err) throw err;
         })
     })
-    .catch(function(err){
-        if(err) throw err;
-    })
+    .catch(error => {
+        // Handle errors here
+        res.status(500).json(error);
+    });
 })
 
 
@@ -153,7 +188,7 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
 
         let result = JSON.parse(response.raw_body);
 
-        Orders.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { completion_status: result.payment_status_description},{ new: false })
+        OrdersModel.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { completion_status: result.payment_status_description},{ new: false })
         .then( data => {
             console.log(data);
             res.json('success')
@@ -174,7 +209,7 @@ app.get('/ConfirmPayment/:id', urlEncoded, function(req, res){
     {
             res.json('Invalid Id')
     }else{
-        Orders.findById(req.params.id)
+        OrdersModel.findById(req.params.id)
         .then(data => {
             if(data){ //Check id data has been found
 
@@ -217,7 +252,7 @@ app.get('/RegisteredIpns', accessToken, function(req, res){
 
 //Get Delivered Orders
 app.get('/GetAllOrders', function(req, res){
-    Orders.find({ completion_status: "Completed"})
+    OrdersModel.find({ completion_status: "Completed"})
     .then( data =>{ 
         res.json(data);
     })
@@ -227,7 +262,7 @@ app.get('/GetAllOrders', function(req, res){
 })
 
 app.get('/GetDeliveredOrders', function(req, res){
-    Orders.find({ delivery_status: 'delivered' })
+    OrdersModel.find({ delivery_status: 'delivered' })
     .then( data =>{ 
         res.json(data);
     })
@@ -239,7 +274,7 @@ app.get('/GetDeliveredOrders', function(req, res){
 
 //Get Orders Pending Delivery
 app.get('/GetPendingOrders', function(req, res){
-    Orders.find({$and:[{ delivery_status: 'pending' },{completion_status: 'Completed'}]})
+    OrdersModel.find({$and:[{ delivery_status: 'pending' },{completion_status: 'Completed'}]})
     .then( data =>{ 
         res.json(data);
     })
@@ -251,7 +286,7 @@ app.get('/GetPendingOrders', function(req, res){
 //Update Orders On Delivery
 app.put('/update_delivery/:id', urlEncoded, function(req, res){
     let date = getTodayDate(); 
-    Orders.findByIdAndUpdate(req.params.id,{delivery_status:'delivered', delivery_date: date }, {new: true})
+    OrdersModel.findByIdAndUpdate(req.params.id,{delivery_status:'delivered', delivery_date: date }, {new: true})
     .then(data => {
         res.json('success')
     })
