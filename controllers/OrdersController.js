@@ -242,7 +242,7 @@ app.get('/ConfirmPayment/:id', urlEncoded, function(req, res){
 
 //Get registered IPNs for Particular Merchant
 app.get('/RegisteredIpns', accessToken, function(req, res){
-    unirest('GET', 'http://cybqa.pesapal.com/pesapalv3/api/URLSetup/GetIpnList')
+    unirest('GET', 'https://pay.pesapal.com/v3/api/URLSetup/GetIpnList')
     .headers({
         "Content-Type" : "application/json",
         "Accept" : "application/json",
