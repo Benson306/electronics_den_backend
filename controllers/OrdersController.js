@@ -222,7 +222,7 @@ app.get('/ConfirmPayment/:id', urlEncoded, function(req, res){
         OrdersModel.findById(req.params.id)
         .then(data => {
             if(data){ //Check id data has been found
-
+                console.log(data);
                 if(data.completion_status === "Completed"){
                     res.status(200).json('Completed')
                 }else if(data.completion_status === "Failed"){
