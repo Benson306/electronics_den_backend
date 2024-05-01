@@ -2,6 +2,8 @@ let mongoose = require('mongoose');
 
 let orderSchema =  new mongoose.Schema({
     OrderTrackingId : String,
+    first_name: String,
+    second_name: String,
     email: String,
     phone_number: String, 
     items : [{}],

@@ -85,6 +85,8 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
 
     let received = {
         OrderTrackingId : "",
+        first_name: req.body.first_name,
+        second_name: req.body.second_name,
         email : req.body.email,
         phone_number : req.body.phoneNumber, 
         items : req.body.products,
@@ -147,10 +149,10 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
                     "email_address": data.email,
                     "phone_number": data.phone_number,
                     "country_code": "KE",
-                    "first_name": "Ben",
+                    "first_name": received.first_name,
                     "middle_name": "",
-                    "last_name": "Ndiwa",
-                    "line_1": "Ndiwa",
+                    "last_name": received.second_name,
+                    "line_1": "",
                     "line_2": "",
                     "city": "",
                     "state": "",
