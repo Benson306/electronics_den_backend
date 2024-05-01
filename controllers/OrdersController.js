@@ -162,20 +162,18 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
             .end(response =>{
                 if (response.error) throw new Error(response.error);
 
-                console.log(response.raw_body);
-
                 //Update Order with tracking Id
                 OrdersModel.findOneAndUpdate({_id: data._id}, { OrderTrackingId: response.raw_body.order_tracking_id}, {new: false})
                 .then( data => {
                     res.json(response.raw_body)
                 })
                 .catch( err => {
-                    console.log(err)
+                    res.status(500).json(err);
                 })
             })
         })
         .catch(function(err){
-            if(err) throw err;
+            res.status(500).json(err);
         })
     })
     .catch(error => {
@@ -203,11 +201,10 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
 
         OrdersModel.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { completion_status: result.payment_status_description},{ new: false })
         .then( data => {
-            console.log(data);
             res.json('success')
         })
         .catch(err =>{
-            console.log(err);
+            res.status(500).json(err);
         })
 
     })
@@ -227,19 +224,19 @@ app.get('/ConfirmPayment/:id', urlEncoded, function(req, res){
             if(data){ //Check id data has been found
 
                 if(data.completion_status === "Completed"){
-                    res.json('Completed')
+                    res.status(200).json('Completed')
                 }else if(data.completion_status === "Failed"){
-                    res.json('Failed')
+                    res.status(402).json('Failed')
                 }else if(data.completion_status === "pending"){
-                    res.json('Pending')
+                    res.status(409).json('Pending')
                 }
 
             }else{
-                res.json('Order Does Not Exist');
+                res.status(404).json('Order Does Not Exist');
             }
         })
         .catch(err => {
-            console.log('error');    
+            res.status(500).json('Server Error');  
         })
     }
 })
