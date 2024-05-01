@@ -13,6 +13,7 @@ const urlEncoded = bodyParser.urlencoded({extended: false});
 
 const unirest = require('unirest');
 const VideosModel = require('../models/VideosModel');
+const LocationsModel = require('../models/LocationsModel');
 
 function accessToken(req, res, next){
 
@@ -93,94 +94,104 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         completion_status: "pending",
         deliveryLocation : req.body.location,
         delivery_status : "pending",
-        delivery_cost : req.body.deliveryCost,
         order_date : date,
         delivery_date : ""
     }
 
     let TotalPrice = 0;
+    let location =  received.deliveryLocation;
 
-    let promises = received.items.map( item => {
-        if(item.title){
-            return VideosModel.findOne({ _id : item._id })
-            .then(response => {
-                if(item.quantity < 1){
-                    TotalPrice = TotalPrice + ( response.price * 1);
-                }else{
-                    TotalPrice = TotalPrice + ( response.price * item.quantity);
-                }
-            })
-        }else{
-            return ProductsModel.findOne({ _id : item._id })
-            .then(response => {
-                if(item.quantity < 1){
-                    TotalPrice = TotalPrice + ( response.price * 1);
-                }else{
-                    TotalPrice = TotalPrice + ( response.price * item.quantity);
-                }
-            })
-        }
-    })
+    LocationsModel.findById(location)
+    .then(locationData => {
+        let delivery_cost = locationData.price;
 
-    Promise.all(promises)
-    .then(() => {
-        received.total_price = TotalPrice;
-
-        OrdersModel(received).save()
-        .then(data => {
-
-            unirest('POST', 'https://pay.pesapal.com/v3/api/Transactions/SubmitOrderRequest')
-            .headers({
-                'Content-Type':'application/json',
-                'Accept':'application/json',
-                'Authorization':'Bearer ' + req.access_token
-            })
-            .send({
-                "id": data._id, //order id
-                "currency": "KES",
-                "amount":  1,//TotalPrice + delivery cost
-                "description": "Payment for Iko Nini Merch",
-                "callback_url": process.env.CLIENT_URL +  "/confirm",
-                "cancellation_url": process.env.CLIENT_URL + "/cancel", //Replace with frontend failed Page URL
-                "redirect_mode": "",
-                "notification_id": process.env.IPN_ID,
-                "branch": "Iko Nini - Nairobi",
-                "billing_address": {
-                    "email_address": data.email,
-                    "phone_number": data.phone_number,
-                    "country_code": "KE",
-                    "first_name": received.first_name,
-                    "middle_name": "",
-                    "last_name": received.second_name,
-                    "line_1": "",
-                    "line_2": "",
-                    "city": "",
-                    "state": "",
-                    "postal_code": "",
-                    "zip_code": ""
-                }
-            })
-            .end(response =>{
-                if (response.error) throw new Error(response.error);
-
-                //Update Order with tracking Id
-                OrdersModel.findOneAndUpdate({_id: data._id}, { OrderTrackingId: response.raw_body.order_tracking_id}, {new: false})
-                .then( data => {
-                    res.json(response.raw_body)
+        let promises = received.items.map( item => {
+            if(item.title){
+                return VideosModel.findOne({ _id : item._id })
+                .then(response => {
+                    if(item.quantity < 1){
+                        TotalPrice = TotalPrice + ( response.price * 1);
+                    }else{
+                        TotalPrice = TotalPrice + ( response.price * item.quantity);
+                    }
                 })
-                .catch( err => {
-                    res.status(500).json(err);
+            }else{
+                return ProductsModel.findOne({ _id : item._id })
+                .then(response => {
+                    if(item.quantity < 1){
+                        TotalPrice = TotalPrice + ( response.price * 1);
+                    }else{
+                        TotalPrice = TotalPrice + ( response.price * item.quantity);
+                    }
                 })
+            }
+        })
+    
+        Promise.all(promises)
+        .then(() => {
+            received.total_price = TotalPrice;
+            received.delivery_cost = delivery_cost;
+
+            OrdersModel(received).save()
+            .then(data => {
+    
+                unirest('POST', 'https://pay.pesapal.com/v3/api/Transactions/SubmitOrderRequest')
+                .headers({
+                    'Content-Type':'application/json',
+                    'Accept':'application/json',
+                    'Authorization':'Bearer ' + req.access_token
+                })
+                .send({
+                    "id": data._id, //order id
+                    "currency": "KES",
+                    "amount":  1,// received.total_price + received.delivery_cost
+                    "description": "Payment for Iko Nini Merch",
+                    "callback_url": process.env.CLIENT_URL +  "/confirm",
+                    "cancellation_url": process.env.CLIENT_URL + "/cancel", //Replace with frontend failed Page URL
+                    "redirect_mode": "",
+                    "notification_id": process.env.IPN_ID,
+                    "branch": "Iko Nini - Nairobi",
+                    "billing_address": {
+                        "email_address": data.email,
+                        "phone_number": data.phone_number,
+                        "country_code": "KE",
+                        "first_name": received.first_name,
+                        "middle_name": "",
+                        "last_name": received.second_name,
+                        "line_1": "",
+                        "line_2": "",
+                        "city": "",
+                        "state": "",
+                        "postal_code": "",
+                        "zip_code": ""
+                    }
+                })
+                .end(response =>{
+                    if (response.error) throw new Error(response.error);
+    
+                    //Update Order with tracking Id
+                    OrdersModel.findOneAndUpdate({_id: data._id}, { OrderTrackingId: response.raw_body.order_tracking_id}, {new: false})
+                    .then( data => {
+                        res.json(response.raw_body)
+                    })
+                    .catch( err => {
+                        res.status(500).json(err);
+                    })
+                })
+            })
+            .catch(function(err){
+                res.status(500).json(err);
             })
         })
-        .catch(function(err){
-            res.status(500).json(err);
-        })
+        .catch(error => {
+            // Handle errors here
+            res.status(500).json("Server Error. Try again");
+        });
+
+
     })
-    .catch(error => {
-        // Handle errors here
-        res.status(500).json("Server Error. Try again");
-    });
+
+    
 })
 
 
