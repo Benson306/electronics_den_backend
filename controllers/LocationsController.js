@@ -32,4 +32,24 @@ app.get('/get_locations', (req, res)=>{
     })
 })
 
+app.put('/edit_location/:id', urlEncoded,  (req, res)=>{
+    LocationsModel.findByIdAndUpdate(req.params.id, { town: req.body.town, price: req.body.price}, { new: true})
+    .then(data => {
+        res.json("Success");
+    })
+    .catch(error => {
+        res.status(500).json("Server error");
+    });
+})
+
+app.delete('/del_location/:id', urlEncoded, (req, res)=>{
+    LocationsModel.findByIdAndRemove(req.params.id)
+    .then(data => {
+        res.json("Success");
+    })
+    .catch(error => {
+        res.status(500).json("Server error");
+    });
+})
+
 module.exports = app;
