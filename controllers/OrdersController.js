@@ -16,7 +16,7 @@ const VideosModel = require('../models/VideosModel');
 
 function accessToken(req, res, next){
 
-    unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/Auth/RequestToken/')
+    unirest('POST', 'https://pay.pesapal.com/v3/api/Auth/RequestToken')
     .headers({
         "Content-Type" : "application/json",
         "Accept" : "application/json"
@@ -48,7 +48,7 @@ function getTodayDate() {
 //Register IPN callback URL
 app.get('/RegisterIpn', accessToken, function(req, res){
 
-    unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/URLSetup/RegisterIPN/')
+    unirest('POST', 'https://pay.pesapal.com/v3/api/URLSetup/RegisterIPN')
     .headers({
         "Content-Type" : "application/json",
         "Accept" : "application/json",
@@ -60,7 +60,6 @@ app.get('/RegisterIpn', accessToken, function(req, res){
     })
     .end(response => {
         if (response.error) throw new Error(response.error);
-
         console.log(response.raw_body);
         res.json(response.raw_body);
     });
@@ -222,7 +221,6 @@ app.get('/ConfirmPayment/:id', urlEncoded, function(req, res){
         OrdersModel.findById(req.params.id)
         .then(data => {
             if(data){ //Check id data has been found
-                console.log(data);
                 if(data.completion_status === "Completed"){
                     res.status(200).json('Completed')
                 }else if(data.completion_status === "Failed"){
