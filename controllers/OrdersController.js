@@ -85,8 +85,8 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
 
     let received = {
         OrderTrackingId : "",
-        first_name: req.body.first_name,
-        second_name: req.body.second_name,
+        first_name: req.body.firstname,
+        second_name: req.body.secondname,
         email : req.body.email,
         phone_number : req.body.phoneNumber, 
         items : req.body.products,

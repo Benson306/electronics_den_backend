@@ -31,6 +31,9 @@ app.use('/', OrdersController);
 let VideosController = require('./controllers/VideosController');
 app.use('/', VideosController);
 
+let LocationsController = require('./controllers/LocationsController');
+app.use('/', LocationsController)
+
 app.get('/',(req, res)=>{
     res.json('Iko Nini');
 })
