@@ -127,7 +127,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         OrdersModel(received).save()
         .then(data => {
 
-            unirest('POST', 'http://cybqa.pesapal.com/pesapalv3/api/Transactions/SubmitOrderRequest')
+            unirest('POST', 'https://pay.pesapal.com/v3/api/Transactions/SubmitOrderRequest')
             .headers({
                 'Content-Type':'application/json',
                 'Accept':'application/json',
@@ -187,7 +187,7 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
     console.log('ipn callback')
 
     //Get transaction Status
-    unirest('GET', `http://cybqa.pesapal.com/pesapalv3/api/Transactions/GetTransactionStatus?orderTrackingId=${req.body.OrderTrackingId}`)
+    unirest('GET', `https://pay.pesapal.com/v3/api/Transactions/GetTransactionStatus?orderTrackingId=${req.body.OrderTrackingId}`)
     .headers({
         "Content-Type" : "application/json",
         "Accept" : "application/json",
@@ -254,9 +254,6 @@ app.get('/RegisteredIpns', accessToken, function(req, res){
         res.json(response.raw_body)
     });
 })
-
-
-//Dashboard Data
 
 //Get Delivered Orders
 app.get('/GetAllOrders', function(req, res){
