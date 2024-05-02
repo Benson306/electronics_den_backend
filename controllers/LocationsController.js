@@ -39,6 +39,16 @@ app.get('/get_locations', (req, res)=>{
     })
 })
 
+app.get('/get_location/:id', (req, res)=>{
+    LocationsModel.findOne({ _id: req.params.id})
+    .then(data => {
+        res.json(data);
+    })
+    .catch(error => {
+        res.status(500).json("Server error");
+    })
+})
+
 app.put('/edit_location/:id', urlEncoded,  (req, res)=>{
     LocationsModel.findByIdAndUpdate(req.params.id, { town: req.body.town, price: req.body.price}, { new: true})
     .then(data => {
