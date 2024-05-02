@@ -13,12 +13,19 @@ app.post('/add_location', urlEncoded, (req, res)=>{
     let town = req.body.town;
     let price = req.body.price;
 
-    LocationsModel({ town, price}).save()
-    .then(()=>{
-        res.json("Success");
-    })
-    .catch(error => {
-        res.status(500).json("Server error");
+    LocationsModel.findOne({ town : town})
+    .then(data => {
+        if(data){
+            res.status(409).json("Duplicate record")
+        }else{
+            LocationsModel({ town, price}).save()
+            .then(()=>{
+                res.json("Success");
+            })
+            .catch(error => {
+                res.status(500).json("Server error");
+            })
+        }
     })
 })
 
