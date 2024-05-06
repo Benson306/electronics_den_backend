@@ -40,6 +40,33 @@ app.post('/add_video', upload.single('thumbnail'), (req, res)=>{
     })
 })
 
+app.put('/edit_video/:id', upload.single('thumbnail'), (req, res)=>{
+    let hours = req.body.hours;
+    let minutes = req.body.minutes;
+    let title = req.body.title;
+    let price = req.body.price;
+    let id = req.params.id;
+
+    if(req.body.thumbnail){ // Image is retained
+        VideosModel.findByIdAndUpdate(id, { title, hours, minutes, price }, { new: true })
+        .then((response)=>{
+            res.status(200).json('success');
+        })
+        .catch(err => {
+            res.status(400).json('success');
+        })
+    }else{ // New Image
+        let thumbnail = req.file.filename;
+        VideosModel.findByIdAndUpdate(id, { thumbnail, title, hours, minutes, price }, { new: true })
+        .then((response)=>{
+            res.status(200).json('success');
+        })
+        .catch(err => {
+            res.status(400).json('success');
+        })
+    }   
+})
+
 app.get('/get_videos', (req, res)=>{
     VideosModel.find({})
     .then((response)=>{
