@@ -70,6 +70,49 @@ app.post('/add_product', upload.single('image'), (req, res)=>{
     })
 })
 
+app.put('/edit_product/:id', upload.single('image'), (req, res)=>{
+    let id = req.params.id;
+    let productName  = req.body.productName;
+    let type = req.body.type;
+    let price  = req.body.price;
+    let xSmall = req.body.xSmall;
+    let small = req.body.small
+    let medium = req.body.medium
+    let large = req.body.large
+    let xLarge = req.body.xLarge
+    let xXLarge = req.body.xXLarge
+
+    if(req.body.image){ // Image is retained
+        let data = {
+            type, productName, price, xSmall, small, medium, large,
+            xLarge, xXLarge
+        }
+
+        ProductsModel.findByIdAndUpdate(id, data, {new: true})
+        .then((response)=>{
+            res.status(200).json('success');
+        })
+        .catch(err => {
+            res.status(500).json('success');
+        })
+
+    }else{
+        let image = req.file.filename;
+        let data = {
+            image, type, productName, price, xSmall, small, medium, large,
+            xLarge, xXLarge
+        }
+
+        ProductsModel.findByIdAndUpdate(id, data, {new: true})
+        .then((response)=>{
+            res.status(200).json('success');
+        })
+        .catch(err => {
+            res.status(500).json('success');
+        })
+    }
+})
+
 app.delete('/del_product/:id', urlEncoded, (req, res)=>{
     ProductsModel.findByIdAndRemove(req.params.id)
     .then(()=>{

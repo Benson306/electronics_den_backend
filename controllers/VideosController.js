@@ -53,7 +53,7 @@ app.put('/edit_video/:id', upload.single('thumbnail'), (req, res)=>{
             res.status(200).json('success');
         })
         .catch(err => {
-            res.status(400).json('success');
+            res.status(500).json('success');
         })
     }else{ // New Image
         let thumbnail = req.file.filename;
@@ -62,7 +62,7 @@ app.put('/edit_video/:id', upload.single('thumbnail'), (req, res)=>{
             res.status(200).json('success');
         })
         .catch(err => {
-            res.status(400).json('success');
+            res.status(500).json('success');
         })
     }   
 })
