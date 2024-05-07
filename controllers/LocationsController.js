@@ -6,10 +6,11 @@ let mongoose = require('mongoose');
 
 const bodyParser = require('body-parser');
 const LocationsModel = require('../models/LocationsModel');
+const verifyToken = require('../middleware/authMiddleware');
 
 const urlEncoded = bodyParser.urlencoded({extended: false});
 
-app.post('/add_location', urlEncoded, (req, res)=>{
+app.post('/add_location', urlEncoded, verifyToken, (req, res)=>{
     let town = req.body.town;
     let price = req.body.price;
 
@@ -29,7 +30,7 @@ app.post('/add_location', urlEncoded, (req, res)=>{
     })
 })
 
-app.get('/get_locations', (req, res)=>{
+app.get('/get_locations', verifyToken, (req, res)=>{
     LocationsModel.find()
     .then(data => {
         res.json(data);
@@ -39,7 +40,7 @@ app.get('/get_locations', (req, res)=>{
     })
 })
 
-app.get('/get_location/:id', (req, res)=>{
+app.get('/get_location/:id', verifyToken, (req, res)=>{
     LocationsModel.findOne({ _id: req.params.id})
     .then(data => {
         res.json(data);
@@ -49,7 +50,7 @@ app.get('/get_location/:id', (req, res)=>{
     })
 })
 
-app.put('/edit_location/:id', urlEncoded,  (req, res)=>{
+app.put('/edit_location/:id', urlEncoded, verifyToken, (req, res)=>{
     LocationsModel.findByIdAndUpdate(req.params.id, { town: req.body.town, price: req.body.price}, { new: true})
     .then(data => {
         res.json("Success");
@@ -59,7 +60,7 @@ app.put('/edit_location/:id', urlEncoded,  (req, res)=>{
     });
 })
 
-app.delete('/del_location/:id', urlEncoded, (req, res)=>{
+app.delete('/del_location/:id', urlEncoded, verifyToken, (req, res)=>{
     LocationsModel.findByIdAndRemove(req.params.id)
     .then(data => {
         res.json("Success");

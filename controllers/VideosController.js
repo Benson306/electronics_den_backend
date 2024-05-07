@@ -12,6 +12,7 @@ const fs = require('fs'); // For working with the file system
 
 const path = require('path'); // For handling file paths
 const VideosModel = require('../models/VideosModel');
+const verifyToken = require('../middleware/authMiddleware');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb)=>{
@@ -24,7 +25,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage })
 
-app.post('/add_video', upload.single('thumbnail'), (req, res)=>{
+app.post('/add_video', verifyToken, upload.single('thumbnail'), (req, res)=>{
     let thumbnail = req.file.filename;
     let hours = req.body.hours;
     let minutes = req.body.minutes;
@@ -40,7 +41,7 @@ app.post('/add_video', upload.single('thumbnail'), (req, res)=>{
     })
 })
 
-app.put('/edit_video/:id', upload.single('thumbnail'), (req, res)=>{
+app.put('/edit_video/:id', verifyToken, upload.single('thumbnail'), (req, res)=>{
     let hours = req.body.hours;
     let minutes = req.body.minutes;
     let title = req.body.title;
@@ -77,7 +78,7 @@ app.get('/get_videos', (req, res)=>{
     })
 })
 
-app.delete('/del_video/:id', (req, res)=>{
+app.delete('/del_video/:id', verifyToken, (req, res)=>{
     VideosModel.findByIdAndRemove(req.params.id)
     .then(()=>{
         res.status(200).json('success');

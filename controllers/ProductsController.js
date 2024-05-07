@@ -12,6 +12,7 @@ const fs = require('fs'); // For working with the file system
 
 const path = require('path'); // For handling file paths
 const ProductsModel = require('../models/ProductsModel');
+const verifyToken = require('../middleware/authMiddleware');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb)=>{
@@ -44,7 +45,7 @@ app.get('/get_products/:type', (req, res)=>{
     })
 })
 
-app.post('/add_product', upload.single('image'), (req, res)=>{
+app.post('/add_product', verifyToken, upload.single('image'), (req, res)=>{
     let image = req.file.filename;
     let productName  = req.body.productName;
     let type = req.body.type;
@@ -70,7 +71,7 @@ app.post('/add_product', upload.single('image'), (req, res)=>{
     })
 })
 
-app.put('/edit_product/:id', upload.single('image'), (req, res)=>{
+app.put('/edit_product/:id', verifyToken, upload.single('image'), (req, res)=>{
     let id = req.params.id;
     let productName  = req.body.productName;
     let type = req.body.type;
@@ -113,7 +114,7 @@ app.put('/edit_product/:id', upload.single('image'), (req, res)=>{
     }
 })
 
-app.delete('/del_product/:id', urlEncoded, (req, res)=>{
+app.delete('/del_product/:id', urlEncoded, verifyToken, (req, res)=>{
     ProductsModel.findByIdAndRemove(req.params.id)
     .then(()=>{
         res.status(200).json('success');
@@ -123,7 +124,7 @@ app.delete('/del_product/:id', urlEncoded, (req, res)=>{
     })
 })
 
-app.post('/change_availability/:id', urlEncoded, (req, res)=>{
+app.post('/change_availability/:id', urlEncoded, verifyToken, (req, res)=>{
     ProductsModel.findByIdAndUpdate(req.params.id, { availability: req.body.value }, {new: true})
     .then(()=>{
         res.status(200).json('success');

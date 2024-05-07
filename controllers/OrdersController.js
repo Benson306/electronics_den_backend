@@ -14,6 +14,7 @@ const urlEncoded = bodyParser.urlencoded({extended: false});
 const unirest = require('unirest');
 const VideosModel = require('../models/VideosModel');
 const LocationsModel = require('../models/LocationsModel');
+const verifyToken = require('../middleware/authMiddleware');
 
 function accessToken(req, res, next){
 
@@ -269,7 +270,7 @@ app.get('/RegisteredIpns', accessToken, function(req, res){
 })
 
 //Get Delivered Orders
-app.get('/GetAllOrders', function(req, res){
+app.get('/GetAllOrders', verifyToken, function(req, res){
     OrdersModel.find({ completion_status: "Completed"})
     .then( data =>{ 
         res.json(data);
@@ -279,7 +280,7 @@ app.get('/GetAllOrders', function(req, res){
     })
 })
 
-app.get('/GetDeliveredOrders', function(req, res){
+app.get('/GetDeliveredOrders', verifyToken, function(req, res){
     OrdersModel.find({ delivery_status: 'delivered' })
     .then( data =>{ 
         res.json(data);
@@ -291,7 +292,7 @@ app.get('/GetDeliveredOrders', function(req, res){
 
 
 //Get Orders Pending Delivery
-app.get('/GetPendingOrders', function(req, res){
+app.get('/GetPendingOrders', verifyToken, function(req, res){
     OrdersModel.find({$and:[{ delivery_status: 'pending' },{completion_status: 'Completed'}]})
     .then( data =>{ 
         res.json(data);
@@ -302,7 +303,7 @@ app.get('/GetPendingOrders', function(req, res){
 })
 
 //Update Orders On Delivery
-app.put('/update_delivery/:id', urlEncoded, function(req, res){
+app.put('/update_delivery/:id', urlEncoded, verifyToken, function(req, res){
     let date = getTodayDate(); 
     OrdersModel.findByIdAndUpdate(req.params.id,{delivery_status:'delivered', delivery_date: date }, {new: true})
     .then(data => {

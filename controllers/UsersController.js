@@ -7,15 +7,21 @@ const bodyParser = require('body-parser');
 const urlEncoded = bodyParser.urlencoded({extended: false});
 
 const bcrypt = require('bcrypt');
+
+const jwt = require('jsonwebtoken');
+
 const UsersModel = require('../models/UsersModel');
+
+const verifyToken = require('../middleware/authMiddleware');
 
 const saltRounds = 10;
 
 const someOtherPlaintextPassword = 'niniiko';
+
 const master_password = process.env.MASTER_PASSWORD;
 
 //Add Users
-app.post('/add_user', urlEncoded, function(req, res){
+app.post('/add_user', urlEncoded, verifyToken, function(req, res){
     
     const myPlaintextPassword = req.body.password;
     const user_master_password = req.body.master_password;
@@ -48,7 +54,7 @@ app.post('/add_user', urlEncoded, function(req, res){
 
 
 //Get Userss
-app.get('/Users', function(req, res){
+app.get('/Users', verifyToken, function(req, res){
     UsersModel.find()
     .then(data =>{
         res.json(data);    
@@ -57,7 +63,7 @@ app.get('/Users', function(req, res){
 })
 
 //Delete Users
-app.delete('/delete/:master_password/:id', urlEncoded, function(req, res){
+app.delete('/delete/:master_password/:id', urlEncoded, verifyToken, function(req, res){
 
     const user_master_password = req.params.master_password;
 
@@ -80,7 +86,10 @@ app.post('/login', urlEncoded, function(req, res){
         if(data){
             bcrypt.compare(req.body.password, data.password, function(err, result) {
                 if(result){
-                    res.json('success')
+                    const token = jwt.sign({ userId: data._id }, process.env.MASTER_PASSWORD, {
+                        expiresIn: '1h',
+                        });
+                    res.json(token)
                 }else{
                     res.status(401).json('Wrong Credentials')
                 }
@@ -92,7 +101,7 @@ app.post('/login', urlEncoded, function(req, res){
     })
 });
 
-app.post('/change_password', urlEncoded, function(req, res){
+app.post('/change_password', urlEncoded, verifyToken, function(req, res){
     const user_master_password = req.body.master_password;
     const new_password = req.body.new_password;
     const user_id = req.body.user_id;
