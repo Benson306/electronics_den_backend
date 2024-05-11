@@ -30,7 +30,7 @@ app.post('/add_location', urlEncoded, verifyToken, (req, res)=>{
     })
 })
 
-app.get('/get_locations', verifyToken, (req, res)=>{
+app.get('/get_locations', (req, res)=>{
     LocationsModel.find()
     .then(data => {
         res.json(data);
