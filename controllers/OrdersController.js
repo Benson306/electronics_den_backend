@@ -236,6 +236,9 @@ app.get('/ConfirmPayment/:id', urlEncoded, function(req, res){
         .then(data => {
             if(data){ //Check id data has been found
                 if(data.completion_status === "Completed"){
+
+                    // Send Payment Email
+                    
                     res.status(200).json('Completed')
                 }else if(data.completion_status === "Failed"){
                     res.status(402).json('Failed')

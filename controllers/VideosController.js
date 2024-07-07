@@ -13,6 +13,7 @@ const fs = require('fs'); // For working with the file system
 const path = require('path'); // For handling file paths
 const VideosModel = require('../models/VideosModel');
 const verifyToken = require('../middleware/authMiddleware');
+const unirest = require('unirest');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb)=>{
@@ -86,6 +87,17 @@ app.delete('/del_video/:id', verifyToken, (req, res)=>{
     .catch(()=>{
         res.status(400).json('success');
     })
+});
+
+app.get('/get_upload_url', verifyToken, (req, res)=>{
+    unirest.get('http://localhost:8080/get_upload_url')
+    .end(response => {
+        if (response.error) {
+            console.error('GET error', response.error);
+        } else {
+            res.json(response.body);
+        }
+    });
 })
 
 module.exports = app;
