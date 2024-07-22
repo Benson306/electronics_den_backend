@@ -247,8 +247,10 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
             .send(reformattedData)
             .end(response => {
                 if (response.error){
+                    console.log(response.error);
                     throw new Error(response.error);
                 }else{
+                    console.log('success');
                     res.json('success');
                 }
             });
