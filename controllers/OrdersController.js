@@ -240,7 +240,7 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
             };
 
             // Send SUccess email if payed
-            unirest('POST', 'http://localhost:8080/send_one_time_link')
+            unirest('POST', 'https://d5b7-102-212-236-177.ngrok-free.app/test_email')
             .headers({
                 "Content-Type" : "application/json"
             })
@@ -347,6 +347,12 @@ app.put('/update_delivery/:id', urlEncoded, verifyToken, function(req, res){
         res.json('success')
     })
     .catch(err => console.log('error'))
+});
+
+app.post('/test_email', urlEncoded, (req, res)=>{
+    console.log(req.body);
+
+    res.json('success');
 })
 
 
