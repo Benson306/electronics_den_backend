@@ -213,15 +213,50 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
         let result = JSON.parse(response.raw_body);
 
         OrdersModel.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { completion_status: result.payment_status_description},{ new: false })
-        .then( data => {
-            res.json('success')
+        .then( mongoData => {
+            const reformattedData = {
+                email: mongoData.email,
+                username: `${mongoData.first_name} ${mongoData.second_name}`,
+                videos: mongoData.items
+                    .filter(item => item.type === 'video')
+                    .map((item, index) => ({
+                        name: item.title,
+                        price: Number(item.price),
+                        video_id: id
+                    })),
+                products: mongoData.items
+                    .filter(item => item.type !== 'video')
+                    .map(item => ({
+                        name: item.productName,
+                        price: Number(item.price),
+                        image_link: `https://api.ikonini.live/uploads/${item.image}`,
+                        quantity: Number(item.quantity)
+                    })),
+                payment: {
+                    transaction_id: mongoData.OrderTrackingId,
+                    total_amount: Number(mongoData.total_price),
+                    delivery_amount: Number(mongoData.delivery_cost)
+                }
+            };
+
+            // Send SUccess email if payed
+            unirest('POST', 'http://localhost:8080/send_one_time_link')
+            .headers({
+                "Content-Type" : "application/json"
+            })
+            .send(reformattedData)
+            .end(response => {
+                if (response.error){
+                    throw new Error(response.error);
+                }else{
+                    res.json('success');
+                }
+            });
         })
         .catch(err =>{
             res.status(500).json(err);
         })
-
     })
-    
 })
 
 
@@ -230,15 +265,12 @@ app.get('/ConfirmPayment/:id', urlEncoded, function(req, res){
     //Check if Id is valid mongo Id
     if (!mongoose.Types.ObjectId.isValid(req.params.id))
     {
-            res.json('Invalid Id')
+        res.json('Invalid Id')
     }else{
         OrdersModel.findById(req.params.id)
         .then(data => {
             if(data){ //Check id data has been found
                 if(data.completion_status === "Completed"){
-
-                    // Send Payment Email
-                    
                     res.status(200).json('Completed')
                 }else if(data.completion_status === "Failed"){
                     res.status(402).json('Failed')

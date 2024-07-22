@@ -26,20 +26,24 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage })
 
-app.post('/add_video', verifyToken, upload.single('thumbnail'), (req, res)=>{
+app.post('/add_video', verifyToken, upload.single('thumbnail'), async (req, res)=>{
     let thumbnail = req.file.filename;
+    let type = "video";
     let hours = req.body.hours;
     let minutes = req.body.minutes;
     let title = req.body.title;
     let price = req.body.price;
 
-    VideosModel({ thumbnail, title, hours, minutes, price }).save()
-    .then((response)=>{
-        res.status(200).json('success');
-    })
-    .catch(err => {
-        res.status(400).json('success');
-    })
+    let count = await VideosModel.countDocuments().then( count =>{
+        const newCount = count + 1;
+        VideosModel({ id: newCount, thumbnail, title, type, hours, minutes, price }).save()
+        .then((response)=>{
+            res.status(200).json('success');
+        })
+        .catch(err => {
+            res.status(400).json('success');
+        })
+    });
 })
 
 app.put('/edit_video/:id', verifyToken, upload.single('thumbnail'), (req, res)=>{
