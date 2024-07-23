@@ -222,7 +222,7 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
                     .map((item, index) => ({
                         name: item.title,
                         price: Number(item.price),
-                        video_id: id
+                        video_id: item.id
                     })),
                 products: mongoData.items
                     .filter(item => item.type !== 'video')
