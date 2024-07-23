@@ -97,7 +97,7 @@ app.get('/get_upload_url', verifyToken, (req, res)=>{
     unirest.get('http://localhost:8080/get_upload_url')
     .headers({
         'X-ClientID': process.env.CLIENT_ID,
-        'X-ClientID': process.env.CLIENT_SECRET
+        'X-ClientSecret': process.env.CLIENT_SECRET
     })
     .end(response => {
         if (response.error) {
