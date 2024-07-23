@@ -240,11 +240,11 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
             };
 
             // Send SUccess email if payed
-            unirest('POST', 'http://localhost:8080/send_one_time_link')
+            unirest('POST', 'https://kajit.ikonini.live/send_one_time_link')
             .headers({
                 "Content-Type" : "application/json",
                 "X-ClientID": process.env.CLIENT_ID,
-                "X-ClientID": process.env.CLIENT_SECRET
+                "X-ClientSecret": process.env.CLIENT_SECRET
             })
             .send(reformattedData)
             .end(response => {
@@ -258,6 +258,7 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
             });
         })
         .catch(err =>{
+            console.log(err);
             res.status(500).json(err);
         })
     })
