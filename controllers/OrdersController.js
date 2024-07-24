@@ -284,8 +284,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
 
 //Receives IPN notifcations
 app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
-    console.log('ipn callback')
-
+    console.log(`${req.body.OrderTrackingId} ipn callback`);
     //Get transaction Status
     unirest('GET', `https://pay.pesapal.com/v3/api/Transactions/GetTransactionStatus?orderTrackingId=${req.body.OrderTrackingId}`)
     .headers({
@@ -325,7 +324,7 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
                 }
             };
 
-            // Send SUccess email if payed
+            // Send Success email if payed
             unirest('POST', 'https://kajit.ikonini.live/send_one_time_link')
             .headers({
                 "Content-Type" : "application/json",
