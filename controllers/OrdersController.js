@@ -149,7 +149,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
                 .send({
                     "id": data._id, //order id
                     "currency": "KES",
-                    "amount":  1,// received.total_price + received.delivery_cost
+                    "amount":  received.total_price + received.delivery_cost,
                     "description": "Payment for Iko Nini Merch",
                     "callback_url": process.env.CLIENT_URL +  "/confirm",
                     "cancellation_url": process.env.CLIENT_URL + "/cancel", //Replace with frontend failed Page URL
@@ -235,7 +235,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
                     .send({
                         "id": data._id, //order id
                         "currency": "KES",
-                        "amount":  1,// received.total_price + received.delivery_cost
+                        "amount":  received.total_price + received.delivery_cost,
                         "description": "Payment for Iko Nini Merch",
                         "callback_url": process.env.CLIENT_URL +  "/confirm",
                         "cancellation_url": process.env.CLIENT_URL + "/cancel", //Replace with frontend failed Page URL
