@@ -13,7 +13,8 @@ let orderSchema =  new mongoose.Schema({
     delivery_cost: Number,
     order_date: String,
     delivery_date: String,
-    total_price: Number
+    total_price: Number,
+    email_sent: Boolean
 })
 
 let OrdersModel = mongoose.model('orders', orderSchema);

@@ -96,7 +96,8 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         deliveryLocation : req.body.location,
         delivery_status : "pending",
         order_date : date,
-        delivery_date : ""
+        delivery_date : "",
+        email_sent : false
     }
 
     let TotalPrice = 0;
@@ -299,6 +300,11 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
 
         OrdersModel.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { completion_status: result.payment_status_description},{ new: false })
         .then( mongoData => {
+            if (mongoData.email_sent) {
+                console.log('Email already sent.');
+                return res.json('success');  // If email already sent, just respond with success
+            }
+
             const reformattedData = {
                 email: mongoData.email,
                 username: `${mongoData.first_name} ${mongoData.second_name}`,
@@ -323,7 +329,7 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
                     delivery_amount: Number(mongoData.delivery_cost)
                 }
             };
-
+            
             // Send Success email if payed
             unirest('POST', 'https://kajit.ikonini.live/send_one_time_link')
             .headers({
@@ -337,8 +343,14 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
                     console.log(response.error);
                     throw new Error(response.error);
                 }else{
-                    console.log('success');
-                    res.json('success');
+                    OrdersModel.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { email_sent: true},{ new: false })
+                    .then(()=>{
+                        console.log("Email sent succesfully");
+                        res.json('success');
+                    })
+                    .catch(()=>{
+                        res.status(500).json("Email not sent");
+                    })
                 }
             });
         })
@@ -348,7 +360,6 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
         })
     })
 })
-
 
 app.get('/ConfirmPayment/:id', urlEncoded, function(req, res){
 
