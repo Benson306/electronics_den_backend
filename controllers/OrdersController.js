@@ -305,12 +305,11 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
                 return res.json('success');  // If email already sent, just respond with success
             }
 
-            LocationsModel.findOne({ _id: mongoData.deliveryLocation})
-            .then(LocationData => {
+            if(mongoData.deliveryLocation == "NA"){
                 const reformattedData = {
                     email: mongoData.email,
                     username: `${mongoData.first_name} ${mongoData.second_name}`,
-                    delivery_location: LocationData.town,
+                    delivery_location: "NA",
                     videos: mongoData.items
                         .filter(item => item.type === 'video')
                         .map((item, index) => ({
@@ -357,10 +356,66 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
                         })
                     }
                 });
-            })
-            .catch(error => {
-                res.status(500).json("Server error");
-            })  
+            }else{
+                LocationsModel.findOne({ _id: mongoData.deliveryLocation})
+                .then(LocationData => {
+                    const reformattedData = {
+                        email: mongoData.email,
+                        username: `${mongoData.first_name} ${mongoData.second_name}`,
+                        delivery_location: LocationData.town,
+                        videos: mongoData.items
+                            .filter(item => item.type === 'video')
+                            .map((item, index) => ({
+                                name: item.title,
+                                price: Number(item.price),
+                                video_id: item.id
+                            })),
+                        products: mongoData.items
+                            .filter(item => item.type !== 'video')
+                            .map(item => ({
+                                name: item.productName,
+                                price: Number(item.price),
+                                image_link: `https://api.ikonini.live/uploads/${item.image}`,
+                                quantity: Number(item.quantity),
+                                size: item.size
+                            })),
+                        payment: {
+                            transaction_id: mongoData.OrderTrackingId,
+                            total_amount: Number(mongoData.total_price),
+                            delivery_amount: Number(mongoData.delivery_cost)
+                        }
+                    };
+                    
+                    // Send Success email if paid
+                    unirest('POST', 'https://kajit.ikonini.live/send_one_time_link')
+                    .headers({
+                        "Content-Type" : "application/json",
+                        "X-ClientID": process.env.CLIENT_ID,
+                        "X-ClientSecret": process.env.CLIENT_SECRET
+                    })
+                    .send(reformattedData)
+                    .end(response => {
+                        if (response.error){
+                            console.log(response.error);
+                            throw new Error(response.error);
+                        }else{
+                            OrdersModel.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { email_sent: true},{ new: false })
+                            .then(()=>{
+                                console.log("Email sent succesfully");
+                                res.json('success');
+                            })
+                            .catch(()=>{
+                                res.status(500).json("Email not sent");
+                            })
+                        }
+                    });
+                })
+                .catch(error => {
+                    res.status(500).json("Server error");
+                })
+            }
+
+            
         })
         .catch(err =>{
             console.log(err);
