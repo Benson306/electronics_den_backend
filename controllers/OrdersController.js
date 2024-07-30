@@ -333,7 +333,8 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
                     }
                 };
                 
-                // Send Success email if paid
+                if (result.payment_status_description.toLowerCase() === "completed") {
+                    // Send Success email if paid
                 unirest('POST', 'https://kajit.ikonini.live/send_one_time_link')
                 .headers({
                     "Content-Type" : "application/json",
@@ -356,6 +357,9 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
                         })
                     }
                 });
+
+                }
+                
             }else{
                 LocationsModel.findOne({ _id: mongoData.deliveryLocation})
                 .then(LocationData => {
