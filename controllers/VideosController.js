@@ -86,6 +86,17 @@ app.get('/get_videos', (req, res)=>{
 app.delete('/del_video/:id', verifyToken, (req, res)=>{
     VideosModel.findByIdAndRemove(req.params.id)
     .then(()=>{
+        unirest('DELETE', 'https://kajit.ikonini.live/delete_video')
+        .headers({
+            "Content-Type" : "application/json",
+            "X-ClientID": process.env.CLIENT_ID,
+            "X-ClientSecret": process.env.CLIENT_SECRET
+        })
+        .end(response => {
+            if (response.error) {
+                console.error("error deleting video", response.error);
+            }
+        });
         res.status(200).json('success');
     })
     .catch(()=>{
@@ -94,11 +105,19 @@ app.delete('/del_video/:id', verifyToken, (req, res)=>{
 });
 
 app.get('/get_upload_url', verifyToken, (req, res)=>{
-    unirest.get('http://localhost:8080/get_upload_url')
+    
+    const inputType = req.body.input_type;
+
+    const uploadParams = {
+        input_type: inputType,
+    };
+
+    unirest('POST', 'https://kajit.ikonini.live/get_upload_url') // changed this to https://LIVE_URL/get_upload_url
     .headers({
         'X-ClientID': process.env.CLIENT_ID,
         'X-ClientSecret': process.env.CLIENT_SECRET
     })
+    .send(uploadParams)
     .end(response => {
         if (response.error) {
             console.error('GET error', response.error);

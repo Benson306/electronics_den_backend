@@ -18,7 +18,7 @@ const saltRounds = 10;
 
 const someOtherPlaintextPassword = 'niniiko';
 
-const master_password = process.env.MASTER_PASSWORD;
+const master_password = process.env.MASTER_PASSWORD; // we should have user roles instead of master passwords
 
 //Add Users
 app.post('/add_user', urlEncoded, verifyToken, function(req, res){
