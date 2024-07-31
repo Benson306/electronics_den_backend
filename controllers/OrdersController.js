@@ -314,6 +314,8 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
 
         let result = JSON.parse(response.raw_body);
 
+        console.log(result);
+
         OrdersModel.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { completion_status: result.payment_status_description},{ new: false })
         .then( mongoData => {
             if (mongoData.email_sent) {
@@ -349,7 +351,7 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
                     }
                 };
                 
-                if (result.payment_status_description.toLowerCase() === "completed") {
+                if (result.payment_status_description.toLowerCase() == "completed") {
                     // Send Success email if paid
                 unirest('POST', 'https://kajit.ikonini.live/send_one_time_link')
                 .headers({
@@ -405,34 +407,36 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
                             delivery_amount: Number(mongoData.delivery_cost)
                         }
                     };
-                    
-                    // Send Success email if paid
-                    unirest('POST', 'https://kajit.ikonini.live/send_one_time_link')
-                    .headers({
-                        "Content-Type" : "application/json",
-                        "X-ClientID": process.env.CLIENT_ID,
-                        "X-ClientSecret": process.env.CLIENT_SECRET
-                    })
-                    .send(reformattedData)
-                    .end(response => {
-                        if (response.error){
-                            console.log(response.error);
-                            throw new Error(response.error);
-                        }else{
-                            OrdersModel.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { email_sent: true},{ new: false })
-                            .then(()=>{
-                                console.log("Email sent succesfully");
-                                res.json('success');
+
+                    if (result.payment_status_description.toLowerCase() == "completed") {
+                            // Send Success email if paid
+                            unirest('POST', 'https://kajit.ikonini.live/send_one_time_link')
+                            .headers({
+                                "Content-Type" : "application/json",
+                                "X-ClientID": process.env.CLIENT_ID,
+                                "X-ClientSecret": process.env.CLIENT_SECRET
                             })
-                            .catch(()=>{
-                                res.status(500).json("Email not sent");
-                            })
+                            .send(reformattedData)
+                            .end(response => {
+                                if (response.error){
+                                    console.log(response.error);
+                                    throw new Error(response.error);
+                                }else{
+                                    OrdersModel.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { email_sent: true},{ new: false })
+                                    .then(()=>{
+                                        console.log("Email sent succesfully");
+                                        res.json('success');
+                                    })
+                                    .catch(()=>{
+                                        res.status(500).json("Email not sent");
+                                    })
+                                }
+                            });
                         }
-                    });
-                })
-                .catch(error => {
-                    res.status(500).json("Server error");
-                })
+                    })
+                    .catch(error => {
+                        res.status(500).json("Server error");
+                    })
             }
 
             
