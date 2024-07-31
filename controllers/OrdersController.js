@@ -81,7 +81,7 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
     }
 
     // Validate phone number
-    if (!phoneRegex.test(req.body.phoneNumber)) {
+    if (req.body.phoneNumber && !phoneRegex.test(req.body.phoneNumber)) {
         return res.status(400).json("Invalid phone number");
     }
 
