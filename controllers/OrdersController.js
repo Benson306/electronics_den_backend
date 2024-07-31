@@ -314,8 +314,6 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
 
         let result = JSON.parse(response.raw_body);
 
-        console.log(result);
-
         OrdersModel.findOneAndUpdate({OrderTrackingId: req.body.OrderTrackingId}, { completion_status: result.payment_status_description},{ new: false })
         .then( mongoData => {
             if (mongoData.email_sent) {
