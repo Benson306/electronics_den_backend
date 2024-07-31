@@ -137,11 +137,12 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
         .then(() => {
             received.total_price = TotalPrice;
             received.delivery_cost = delivery_cost;
+            received.amount_paid = received.min_price;
 
             const grandTotal = received.total_price + received.delivery_cost;
 
             if(received.min_price < grandTotal){
-                res.status(400).json("Min price is invalid");
+                return res.status(400).json("Min price is invalid");
             }else{
                 OrdersModel(received).save()
                 .then(data => {
@@ -230,11 +231,12 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
             .then(() => {
                 received.total_price = TotalPrice;
                 received.delivery_cost = delivery_cost;
+                received.amount_paid = received.min_price;
 
                 const grandTotal = received.total_price + received.delivery_cost;
 
                 if(received.min_price < grandTotal){
-                    res.status(400).json("Min price is invalid");
+                    return res.status(400).json("Min price is invalid");
                 }else{
                     OrdersModel(received).save()
                     .then(data => {
@@ -297,7 +299,6 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
     }    
 })
 
-
 //Receives IPN notifcations
 app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
     console.log(`${req.body.OrderTrackingId} ipn callback`);
@@ -343,7 +344,7 @@ app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
                         })),
                     payment: {
                         transaction_id: mongoData.OrderTrackingId,
-                        total_amount: Number(mongoData.total_price),
+                        total_amount: Number(mongoData.amount_paid),
                         delivery_amount: Number(mongoData.delivery_cost)
                     }
                 };
@@ -471,7 +472,6 @@ app.get('/ConfirmPayment/:id', urlEncoded, function(req, res){
     }
 })
 
-
 //Get registered IPNs for Particular Merchant
 app.get('/RegisteredIpns', accessToken, function(req, res){
     unirest('GET', 'https://pay.pesapal.com/v3/api/URLSetup/GetIpnList')
@@ -507,7 +507,6 @@ app.get('/GetDeliveredOrders', verifyToken, function(req, res){
         console.log(err);
     })
 })
-
 
 //Get Orders Pending Delivery
 app.get('/GetPendingOrders', verifyToken, function(req, res){

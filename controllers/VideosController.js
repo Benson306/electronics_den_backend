@@ -109,7 +109,7 @@ app.get('/get_upload_url', verifyToken, (req, res)=>{
     const inputType = req.body.input_type;
 
     const uploadParams = {
-        input_type: inputType,
+        input_type: "paid",
     };
 
     unirest('POST', 'https://kajit.ikonini.live/get_upload_url') // changed this to https://LIVE_URL/get_upload_url

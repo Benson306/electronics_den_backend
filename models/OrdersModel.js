@@ -14,6 +14,7 @@ let orderSchema =  new mongoose.Schema({
     order_date: String,
     delivery_date: String,
     total_price: Number,
+    amount_paid: Number,
     email_sent: Boolean
 })
 
