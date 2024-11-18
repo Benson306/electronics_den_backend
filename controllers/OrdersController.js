@@ -157,12 +157,12 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
                         "id": data._id, //order id
                         "currency": "KES",
                         "amount":  received.min_price,
-                        "description": "Payment for Iko Nini Merch",
+                        "description": "Payment for Electronics",
                         "callback_url": process.env.CLIENT_URL +  "/confirm",
                         "cancellation_url": process.env.CLIENT_URL + "/cancel", //Replace with frontend failed Page URL
                         "redirect_mode": "",
                         "notification_id": process.env.IPN_ID,
-                        "branch": "Iko Nini - Nairobi",
+                        "branch": "Electronics Den - Nairobi",
                         "billing_address": {
                             "email_address": data.email,
                             "phone_number": data.phone_number,
@@ -251,12 +251,12 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
                             "id": data._id, //order id
                             "currency": "KES",
                             "amount":  received.min_price,
-                            "description": "Payment for Iko Nini Merch",
+                            "description": "Payment for Electronics",
                             "callback_url": process.env.CLIENT_URL +  "/confirm",
                             "cancellation_url": process.env.CLIENT_URL + "/cancel", //Replace with frontend failed Page URL
                             "redirect_mode": "",
                             "notification_id": process.env.IPN_ID,
-                            "branch": "Iko Nini - Nairobi",
+                            "branch": "Electronics Den - Nairobi",
                             "billing_address": {
                                 "email_address": data.email,
                                 "phone_number": data.phone_number,
