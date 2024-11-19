@@ -1,7 +1,6 @@
 let mongoose = require('mongoose');
 
 let orderSchema =  new mongoose.Schema({
-    OrderTrackingId : String,
     first_name: String,
     second_name: String,
     email: String,
@@ -14,8 +13,7 @@ let orderSchema =  new mongoose.Schema({
     order_date: String,
     delivery_date: String,
     total_price: Number,
-    amount_paid: Number,
-    email_sent: Boolean
+    amount_paid: Number
 })
 
 let OrdersModel = mongoose.model('orders', orderSchema);

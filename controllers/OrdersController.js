@@ -299,6 +299,81 @@ app.post('/Checkout', urlEncoded, accessToken, function(req, res){
     }    
 })
 
+app.post('/Payless_checkout', urlEncoded, function(req, res){
+    let date = getTodayDate();
+
+    // Validate email
+    if (!emailRegex.test(req.body.email)) {
+        return res.status(400).json("Invalid email address");
+    }
+
+    // Validate phone number
+    if (req.body.phoneNumber && !phoneRegex.test(req.body.phoneNumber)) {
+        return res.status(400).json("Invalid phone number");
+    }
+
+    let received = {
+        first_name: req.body.firstname,
+        second_name: req.body.secondname,
+        email : req.body.email,
+        phone_number : req.body.phoneNumber, 
+        items : req.body.products,
+        completion_status: "Completed",
+        deliveryLocation : req.body.location,
+        delivery_status : "pending",
+        order_date : date,
+        delivery_date : "",
+        min_price: req.body.minPrice
+    }
+
+    let TotalPrice = 0;
+    let location =  received.deliveryLocation;
+
+    LocationsModel.findById(location)
+    .then(locationData => {
+        let delivery_cost = locationData.price;
+
+        let promises = received.items.map( item => {
+            return ProductsModel.findOne({ _id : item._id })
+                    .then(response => {
+                        if(item.quantity < 1){
+                            TotalPrice = TotalPrice + ( response.price * 1);
+                        }else{
+                            TotalPrice = TotalPrice + ( response.price * item.quantity);
+                        }
+                    })
+        })
+
+
+        Promise.all(promises)
+        .then(() => {
+            received.total_price = TotalPrice;
+            received.delivery_cost = delivery_cost;
+            received.amount_paid = received.min_price;
+
+            const grandTotal = received.total_price + received.delivery_cost;
+
+            if(received.min_price < grandTotal){
+                return res.status(400).json("Min price is invalid");
+            }else{
+                OrdersModel(received).save()
+                .then(data => {
+                    res.json("Success")
+                })
+                .catch( err => {
+                    res.status(500).json(err);
+                })
+
+            }
+        })
+    })
+    .catch(error => {
+        console.log(error)
+        // Handle errors here
+        res.status(500).json("Server Error. Try again");
+    });        
+})
+
 //Receives IPN notifcations
 app.post('/ipn_callback', accessToken, urlEncoded, function(req, res){
     console.log(`${req.body.OrderTrackingId} ipn callback`);

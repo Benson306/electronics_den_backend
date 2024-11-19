@@ -48,18 +48,12 @@ app.get('/get_products/:type', (req, res)=>{
 app.post('/add_product', verifyToken, upload.single('image'), (req, res)=>{
     let image = req.file.filename;
     let productName  = req.body.productName;
-    let type = req.body.type;
+    //let type = req.body.type;
+    let description = req.body.description;
     let price  = req.body.price;
-    let xSmall = req.body.xSmall;
-    let small = req.body.small
-    let medium = req.body.medium
-    let large = req.body.large
-    let xLarge = req.body.xLarge
-    let xXLarge = req.body.xXLarge
 
     let data = {
-        image, type, productName, price, xSmall, small, medium, large,
-        xLarge, xXLarge, availability : true
+        image, productName, price, availability : true, description
     }
 
     ProductsModel(data).save()
@@ -74,19 +68,13 @@ app.post('/add_product', verifyToken, upload.single('image'), (req, res)=>{
 app.put('/edit_product/:id', verifyToken, upload.single('image'), (req, res)=>{
     let id = req.params.id;
     let productName  = req.body.productName;
-    let type = req.body.type;
+    //let type = req.body.type;
+    let description = req.body.description;
     let price  = req.body.price;
-    let xSmall = req.body.xSmall;
-    let small = req.body.small
-    let medium = req.body.medium
-    let large = req.body.large
-    let xLarge = req.body.xLarge
-    let xXLarge = req.body.xXLarge
 
     if(req.body.image){ // Image is retained
         let data = {
-            type, productName, price, xSmall, small, medium, large,
-            xLarge, xXLarge
+            productName, price, description
         }
 
         ProductsModel.findByIdAndUpdate(id, data, {new: true})
@@ -100,8 +88,7 @@ app.put('/edit_product/:id', verifyToken, upload.single('image'), (req, res)=>{
     }else{
         let image = req.file.filename;
         let data = {
-            image, type, productName, price, xSmall, small, medium, large,
-            xLarge, xXLarge
+            image, productName, price, description
         }
 
         ProductsModel.findByIdAndUpdate(id, data, {new: true})
