@@ -32,7 +32,10 @@ let VideosController = require('./controllers/VideosController');
 app.use('/', VideosController);
 
 let LocationsController = require('./controllers/LocationsController');
-app.use('/', LocationsController)
+app.use('/', LocationsController);
+
+let CategoriesController = require('./controllers/CategoriesController');
+app.use('/', CategoriesController);
 
 app.get('/',(req, res)=>{
     res.json('Electronics Den');

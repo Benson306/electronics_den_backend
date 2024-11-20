@@ -48,12 +48,12 @@ app.get('/get_products/:type', (req, res)=>{
 app.post('/add_product', verifyToken, upload.single('image'), (req, res)=>{
     let image = req.file.filename;
     let productName  = req.body.productName;
-    //let type = req.body.type;
+    let type = req.body.type;
     let description = req.body.description;
     let price  = req.body.price;
 
     let data = {
-        image, productName, price, availability : true, description
+        image, productName, price, availability : true, description, type
     }
 
     ProductsModel(data).save()
@@ -68,13 +68,13 @@ app.post('/add_product', verifyToken, upload.single('image'), (req, res)=>{
 app.put('/edit_product/:id', verifyToken, upload.single('image'), (req, res)=>{
     let id = req.params.id;
     let productName  = req.body.productName;
-    //let type = req.body.type;
+    let type = req.body.type;
     let description = req.body.description;
     let price  = req.body.price;
 
     if(req.body.image){ // Image is retained
         let data = {
-            productName, price, description
+            productName, price, description, type
         }
 
         ProductsModel.findByIdAndUpdate(id, data, {new: true})
@@ -88,7 +88,7 @@ app.put('/edit_product/:id', verifyToken, upload.single('image'), (req, res)=>{
     }else{
         let image = req.file.filename;
         let data = {
-            image, productName, price, description
+            image, productName, price, description, type
         }
 
         ProductsModel.findByIdAndUpdate(id, data, {new: true})
