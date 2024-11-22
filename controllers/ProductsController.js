@@ -28,6 +28,7 @@ const upload = multer({ storage })
 app.get('/get_products', (req, res)=>{
     ProductsModel.find({})
     .then((data)=>{
+        console.log(data)
         res.status(200).json(data);
     })
     .catch(err => {
@@ -45,8 +46,8 @@ app.get('/get_products/:type', (req, res)=>{
     })
 })
 
-app.post('/add_product', verifyToken, upload.single('image'), (req, res)=>{
-    let image = req.file.filename;
+app.post('/add_product', verifyToken, upload.array('image'), (req, res)=>{
+    let image = req.files ? req.files.map(file => file.filename) : [];    
     let productName  = req.body.productName;
     let type = req.body.type;
     let description = req.body.description;
@@ -65,41 +66,52 @@ app.post('/add_product', verifyToken, upload.single('image'), (req, res)=>{
     })
 })
 
-app.put('/edit_product/:id', verifyToken, upload.single('image'), (req, res)=>{
-    let id = req.params.id;
-    let productName  = req.body.productName;
-    let type = req.body.type;
-    let description = req.body.description;
-    let price  = req.body.price;
-
-    if(req.body.image){ // Image is retained
-        let data = {
-            productName, price, description, type
-        }
-
-        ProductsModel.findByIdAndUpdate(id, data, {new: true})
-        .then((response)=>{
-            res.status(200).json('success');
-        })
-        .catch(err => {
-            res.status(500).json('success');
-        })
-
-    }else{
-        let image = req.file.filename;
-        let data = {
-            image, productName, price, description, type
-        }
-
-        ProductsModel.findByIdAndUpdate(id, data, {new: true})
-        .then((response)=>{
-            res.status(200).json('success');
-        })
-        .catch(err => {
-            res.status(500).json('success');
-        })
+app.put('/edit_product/:id', upload.array('image'), verifyToken, async (req, res) => {
+    const id = req.params.id;
+    const productName = req.body.productName;
+    const description = req.body.description;
+    const type = req.body.type;
+    const price = req.body.price;
+  
+    const incomingImages = req.body.image
+  
+    let images = [];
+  
+    if (Array.isArray(incomingImages)) {
+      images = [...images, ...incomingImages]
+  
+    } else if (typeof incomingImages === 'string') {
+      images.push(incomingImages)
     }
-})
+  
+    let data = {
+      type,
+      productName,
+      price,
+      description,
+    };
+  
+    try {
+      const product = await ProductsModel.findById(id);
+      
+      if (!product) {
+        return res.status(404).json('Product not found');
+      }
+  
+      if (req.files && req.files.length > 0) {
+        let filenames = req.files.map(file => file.filename);
+        data.image = [...images, ...filenames];
+      }else{
+        data.image = images;
+      }
+  
+      const updatedProduct = await ProductsModel.findByIdAndUpdate(id, data, { new: true });
+      res.status(200).json('success');
+    } catch (err) {
+      console.error(err);
+      res.status(500).json('failed');
+    }
+  });
 
 app.delete('/del_product/:id', urlEncoded, verifyToken, (req, res)=>{
     ProductsModel.findByIdAndRemove(req.params.id)
