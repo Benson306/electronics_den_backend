@@ -28,7 +28,6 @@ const upload = multer({ storage })
 app.get('/get_products', (req, res)=>{
     ProductsModel.find({})
     .then((data)=>{
-        console.log(data)
         res.status(200).json(data);
     })
     .catch(err => {
