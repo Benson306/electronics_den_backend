@@ -51,9 +51,10 @@ app.post('/add_product', verifyToken, upload.array('image'), (req, res)=>{
     let type = req.body.type;
     let description = req.body.description;
     let price  = req.body.price;
+    let links = req.body.links;
 
     let data = {
-        image, productName, price, availability : true, description, type
+        image, productName, price, availability : true, description, type, links
     }
 
     ProductsModel(data).save()
@@ -71,6 +72,7 @@ app.put('/edit_product/:id', upload.array('image'), verifyToken, async (req, res
     const description = req.body.description;
     const type = req.body.type;
     const price = req.body.price;
+    let links = req.body.links;
   
     const incomingImages = req.body.image
   
@@ -88,6 +90,7 @@ app.put('/edit_product/:id', upload.array('image'), verifyToken, async (req, res
       productName,
       price,
       description,
+      links
     };
   
     try {
