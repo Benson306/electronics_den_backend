@@ -12,13 +12,14 @@ const urlEncoded = bodyParser.urlencoded({extended: false});
 
 app.post('/add_category', urlEncoded, verifyToken, (req, res)=>{
     let category = req.body.category;
+    let sub_categories = req.body.sub_categories;
 
     CategoriesModel.findOne({ category : category})
     .then(data => {
         if(data){
             res.status(409).json("Duplicate record")
         }else{
-            CategoriesModel({ category }).save()
+            CategoriesModel({ category, sub_categories }).save()
             .then(()=>{
                 res.json("Success");
             })
@@ -50,7 +51,7 @@ app.get('/get_category/:id', verifyToken, (req, res)=>{
 })
 
 app.put('/edit_category/:id', urlEncoded, verifyToken, (req, res)=>{
-    CategoriesModel.findByIdAndUpdate(req.params.id, { category: req.body.category }, { new: true})
+    CategoriesModel.findByIdAndUpdate(req.params.id, { category: req.body.category, sub_categories: req.body.sub_categories }, { new: true})
     .then(data => {
         res.json("Success");
     })
