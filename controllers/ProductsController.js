@@ -48,13 +48,14 @@ app.get('/get_products/:type', (req, res)=>{
 app.post('/add_product', verifyToken, upload.array('image'), (req, res)=>{
     let image = req.files ? req.files.map(file => file.filename) : [];    
     let productName  = req.body.productName;
+    let sub_category = req.body.sub_category;
     let type = req.body.type;
     let description = req.body.description;
     let price  = req.body.price;
     let links = req.body.links;
 
     let data = {
-        image, productName, price, availability : true, description, type, links
+        image, productName, price, availability : true, description, type, links, sub_category
     }
 
     ProductsModel(data).save()
@@ -71,6 +72,7 @@ app.put('/edit_product/:id', upload.array('image'), verifyToken, async (req, res
     const productName = req.body.productName;
     const description = req.body.description;
     const type = req.body.type;
+    const sub_category = req.body.sub_category;
     const price = req.body.price;
     let links = req.body.links;
   
@@ -86,11 +88,12 @@ app.put('/edit_product/:id', upload.array('image'), verifyToken, async (req, res
     }
   
     let data = {
-      type,
-      productName,
-      price,
-      description,
-      links
+        sub_category,
+        type,
+        productName,
+        price,
+        description,
+        links
     };
   
     try {

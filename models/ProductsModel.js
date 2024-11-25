@@ -6,6 +6,7 @@ let productsSchema = new mongoose.Schema({
     description: String,
     links: [String],
     type: [String],
+    sub_category: [String],
     price: Number,
     xSmall: Boolean,
     small: Boolean,
